@@ -641,17 +641,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const btnFactura = document.getElementById('btnFactura');
         const dniField = document.getElementById('dniField');
         const lblDni = dniField ? dniField.querySelector('label') : null;
+        const txtDni = document.getElementById('txtDni');
         
         if (tipo === 'boleta') {
             btnBoleta.classList.add('active');
             btnFactura.classList.remove('active');
             if (lblDni) lblDni.textContent = 'INGRESAR DNI:';
+            if (txtDni) {
+                txtDni.maxLength = 8;
+                txtDni.placeholder = '12345678';
+            }
             if (dniField) dniField.style.display = 'block';
         } else {
             btnFactura.classList.add('active');
             btnBoleta.classList.remove('active');
             if (lblDni) lblDni.textContent = 'INGRESAR RUC:';
-            // RUC field stays visible (same input, different label)
+            if (txtDni) {
+                txtDni.maxLength = 11;
+                txtDni.placeholder = '12345678901';
+            }
             if (dniField) dniField.style.display = 'block';
         }
     };
