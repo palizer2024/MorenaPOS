@@ -62,65 +62,131 @@
         border-radius: 2px;
     }
     
-    /* ===== CALENDARIO ===== */
-    .calendar-nav {
+    /* ===== SELECTOR DE FECHA COMPACTO ===== */
+    .date-selector {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin-bottom: 3px;
+        justify-content: space-between;
+        background: #f8f8f8;
+        border-radius: 4px;
+        padding: 3px 4px;
+        margin-bottom: 4px;
     }
-    .calendar-nav button {
-        background: #f0f0f0;
-        border: none;
+    .date-selector .arrow-btn {
+        background: none;
+        border: 1px solid #ddd;
         border-radius: 3px;
-        padding: 1px 6px;
+        padding: 2px 6px;
         cursor: pointer;
         font-size: 10px;
-        font-weight: 600;
         color: #555;
+        line-height: 1;
     }
-    .calendar-nav button:hover {
+    .date-selector .arrow-btn:hover {
         background: #FC523B;
+        border-color: #FC523B;
         color: #fff;
     }
-    .calendar-nav .month-year {
+    .date-selector .date-label {
         font-size: 11px;
         font-weight: 700;
         color: #333;
+        cursor: pointer;
+        padding: 2px 8px;
+        border-radius: 3px;
+        user-select: none;
     }
-    
-    .calendar-grid {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 1px;
-        text-align: center;
+    .date-selector .date-label:hover {
+        background: #e8e8e8;
     }
-    .calendar-grid .day-header {
+    .date-selector .date-label .today-badge {
+        display: inline-block;
+        background: #FFC801;
+        color: #333;
         font-size: 8px;
         font-weight: 700;
+        padding: 0 4px;
+        border-radius: 3px;
+        margin-left: 4px;
+        vertical-align: middle;
+    }
+    
+    /* ===== MODAL CALENDARIO ===== */
+    .cal-modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.3);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+    .cal-modal-overlay.active {
+        display: flex;
+    }
+    .cal-modal {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+        padding: 12px;
+        width: 260px;
+    }
+    .cal-modal .cal-modal-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+    }
+    .cal-modal .cal-modal-nav button {
+        background: #f0f0f0;
+        border: none;
+        border-radius: 3px;
+        padding: 3px 8px;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 600;
+        color: #555;
+    }
+    .cal-modal .cal-modal-nav button:hover {
+        background: #FC523B;
+        color: #fff;
+    }
+    .cal-modal .cal-modal-nav .mm-yy {
+        font-size: 13px;
+        font-weight: 700;
+        color: #333;
+    }
+    .cal-modal .cal-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 2px;
+        text-align: center;
+    }
+    .cal-modal .cal-grid .mday-hdr {
+        font-size: 9px;
+        font-weight: 700;
         color: #999;
-        padding: 1px 0;
+        padding: 3px 0;
         text-transform: uppercase;
     }
-    .calendar-grid .day {
-        font-size: 10px;
-        padding: 2px 0;
-        border-radius: 3px;
+    .cal-modal .cal-grid .mday {
+        font-size: 12px;
+        padding: 5px 0;
+        border-radius: 4px;
         cursor: pointer;
         color: #333;
     }
-    .calendar-grid .day:hover {
+    .cal-modal .cal-grid .mday:hover {
         background: #FFC801;
-        color: #333;
     }
-    .calendar-grid .day.other-month {
+    .cal-modal .cal-grid .mday.other {
         color: #ddd;
     }
-    .calendar-grid .day.today {
+    .cal-modal .cal-grid .mday.today {
         background: #FFC801;
         font-weight: 700;
     }
-    .calendar-grid .day.selected {
+    .cal-modal .cal-grid .mday.selected {
         background: #FC523B;
         color: #fff;
         font-weight: 700;
@@ -207,8 +273,24 @@
             Tickets - {{ sede_nombre }}
         </div>
         <div class="card-body">
-            <!-- Calendario -->
-            <div id="calendar"></div>
+            <!-- Selector de fecha compacto -->
+            <div class="date-selector">
+                <button class="arrow-btn" onclick="window.__prevDay()" title="Día anterior"><i class="fas fa-chevron-left"></i></button>
+                <span class="date-label" id="dateLabel" onclick="window.__openModal()"></span>
+                <button class="arrow-btn" onclick="window.__nextDay()" title="Día siguiente"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            
+            <!-- Modal del calendario -->
+            <div class="cal-modal-overlay" id="calModal" onclick="window.__closeModal(event)">
+                <div class="cal-modal" onclick="event.stopPropagation()">
+                    <div class="cal-modal-nav">
+                        <button onclick="window.__modalPrev()"><i class="fas fa-chevron-left"></i></button>
+                        <span class="mm-yy" id="modalMonthYear"></span>
+                        <button onclick="window.__modalNext()"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                    <div class="cal-grid" id="modalGrid"></div>
+                </div>
+            </div>
             
             <!-- Tabla de tickets -->
             <table class="tickets-table">
@@ -271,79 +353,135 @@
 {% block extra_js %}
 <script>
 (function() {
-    const fechaActual = '{{ fecha_actual_str }}';
+    const fechaActualStr = '{{ fecha_actual_str }}';
+    const today = new Date(fechaActualStr + 'T12:00:00');
     
-    let currentDate = new Date(fechaActual + 'T12:00:00');
-    let selectedDate = new Date(fechaActual + 'T12:00:00');
+    // selectedDate = fecha actual de la URL (la que se está mostrando)
+    let selectedDate = new Date(fechaActualStr + 'T12:00:00');
     
-    function renderCalendar() {
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
+    // Para el modal
+    let modalDate = new Date(selectedDate);
+    
+    const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                        'Julio','Agosto','Setiembre','Octubre','Noviembre','Diciembre'];
+    const dayNames = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    
+    function fmtDate(d) {
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        return yyyy + '-' + mm + '-' + dd;
+    }
+    
+    function fmtDisplay(d) {
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        const dayName = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d.getDay()];
+        return dayName + ' ' + dd + '/' + mm + '/' + yyyy;
+    }
+    
+    function isToday(d) {
+        return fmtDate(d) === fmtDate(today);
+    }
+    
+    function updateDateLabel() {
+        const el = document.getElementById('dateLabel');
+        let text = fmtDisplay(selectedDate);
+        if (isToday(selectedDate)) {
+            text += ' <span class="today-badge">HOY</span>';
+        }
+        el.innerHTML = text;
+    }
+    
+    function goToDate(dateStr) {
+        window.location.href = '?fecha=' + dateStr;
+    }
+    
+    // === DAY NAVIGATION ===
+    window.__prevDay = function() {
+        const d = new Date(selectedDate);
+        d.setDate(d.getDate() - 1);
+        goToDate(fmtDate(d));
+    };
+    
+    window.__nextDay = function() {
+        const d = new Date(selectedDate);
+        d.setDate(d.getDate() + 1);
+        goToDate(fmtDate(d));
+    };
+    
+    // === MODAL ===
+    window.__openModal = function() {
+        modalDate = new Date(selectedDate);
+        renderModal();
+        document.getElementById('calModal').classList.add('active');
+    };
+    
+    window.__closeModal = function(e) {
+        if (e.target === e.currentTarget) {
+            document.getElementById('calModal').classList.remove('active');
+        }
+    };
+    
+    window.__modalPrev = function() {
+        modalDate.setMonth(modalDate.getMonth() - 1);
+        renderModal();
+    };
+    
+    window.__modalNext = function() {
+        modalDate.setMonth(modalDate.getMonth() + 1);
+        renderModal();
+    };
+    
+    function renderModal() {
+        const year = modalDate.getFullYear();
+        const month = modalDate.getMonth();
         
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         const daysInPrevMonth = new Date(year, month, 0).getDate();
         
-        const today = new Date(fechaActual + 'T12:00:00');
-        const todayStr = today.toISOString().split('T')[0];
-        const selectedStr = selectedDate.toISOString().split('T')[0];
+        const todayStr = fmtDate(today);
+        const selectedStr = fmtDate(selectedDate);
         
-        const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
-                            'Julio','Agosto','Setiembre','Octubre','Noviembre','Diciembre'];
-        const dayNames = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+        document.getElementById('modalMonthYear').textContent = monthNames[month] + ' ' + year;
         
-        let html = '<div class="calendar-nav">';
-        html += '<button onclick="window.__calPrev()"><i class="fas fa-chevron-left"></i></button>';
-        html += '<span class="month-year">' + monthNames[month] + ' ' + year + '</span>';
-        html += '<button onclick="window.__calNext()"><i class="fas fa-chevron-right"></i></button>';
-        html += '</div>';
-        
-        html += '<div class="calendar-grid">';
+        let html = '';
         for (let d of dayNames) {
-            html += '<div class="day-header">' + d + '</div>';
+            html += '<div class="mday-hdr">' + d + '</div>';
         }
         
         const startDay = firstDay === 0 ? 6 : firstDay - 1;
         for (let i = startDay - 1; i >= 0; i--) {
-            html += '<div class="day other-month">' + (daysInPrevMonth - i) + '</div>';
+            html += '<div class="mday other">' + (daysInPrevMonth - i) + '</div>';
         }
         
         for (let d = 1; d <= daysInMonth; d++) {
             const dateObj = new Date(year, month, d);
-            const dateStr = dateObj.toISOString().split('T')[0];
-            let cls = 'day';
+            const dateStr = fmtDate(dateObj);
+            let cls = 'mday';
             if (dateStr === todayStr) cls += ' today';
             if (dateStr === selectedStr) cls += ' selected';
-            html += '<div class="' + cls + '" data-date="' + dateStr + '" onclick="window.__calSelect(\'' + dateStr + '\')">' + d + '</div>';
+            html += '<div class="' + cls + '" onclick="window.__modalSelect(\'' + dateStr + '\')">' + d + '</div>';
         }
         
         const totalCells = startDay + daysInMonth;
         const remaining = (7 - (totalCells % 7)) % 7;
         for (let d = 1; d <= remaining; d++) {
-            html += '<div class="day other-month">' + d + '</div>';
+            html += '<div class="mday other">' + d + '</div>';
         }
         
-        html += '</div>';
-        
-        document.getElementById('calendar').innerHTML = html;
+        document.getElementById('modalGrid').innerHTML = html;
     }
     
-    window.__calPrev = function() {
-        currentDate.setMonth(currentDate.getMonth() - 1);
-        renderCalendar();
+    window.__modalSelect = function(dateStr) {
+        document.getElementById('calModal').classList.remove('active');
+        goToDate(dateStr);
     };
     
-    window.__calNext = function() {
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        renderCalendar();
-    };
-    
-    window.__calSelect = function(dateStr) {
-        selectedDate = new Date(dateStr + 'T12:00:00');
-        window.location.href = '?fecha=' + dateStr;
-    };
-    
-    renderCalendar();
+    // Init
+    updateDateLabel();
 })();
 </script>
 {% endblock %}
