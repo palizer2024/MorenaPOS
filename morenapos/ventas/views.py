@@ -31,7 +31,7 @@ def caja(request):
                        t.Total, t.Turno, t.Created, t.UserCreated, t.Duplicado
                 FROM ticket t
                 WHERE t.Id_Sede = %s AND CAST(t.Created AS DATE) = %s AND t.Estado = 1
-                ORDER BY t.Created DESC
+                ORDER BY t.Created ASC
             """, [sede_id, fecha_filtro])
             rows = cursor.fetchall()
             for row in rows:
