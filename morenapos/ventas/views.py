@@ -57,5 +57,6 @@ def caja(request):
         'tickets': tickets,
         'fecha_actual': fecha_filtro.isoformat(),
         'fecha_actual_str': fecha_filtro.strftime('%Y-%m-%d'),
+        'today_str': now().date().strftime('%Y-%m-%d'),
     }
     return render(request, 'ventas/caja.html', context)

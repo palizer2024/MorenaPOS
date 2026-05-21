@@ -67,7 +67,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: #f8f8f8;
+        background: #eaeaea;
         border-radius: 4px;
         padding: 3px 4px;
         margin-bottom: 4px;
@@ -87,10 +87,13 @@
         border-color: #FC523B;
         color: #fff;
     }
+    .date-selector .date-label,
+    .date-selector .date-label * {
+        color: #000 !important;
+    }
     .date-selector .date-label {
         font-size: 11px;
         font-weight: 700;
-        color: #333;
         cursor: pointer;
         padding: 2px 8px;
         border-radius: 3px;
@@ -352,9 +355,10 @@
 
 {% block extra_js %}
 <script>
-(function() {
+document.addEventListener('DOMContentLoaded', function() {
     const fechaActualStr = '{{ fecha_actual_str }}';
-    const today = new Date(fechaActualStr + 'T12:00:00');
+    // today = fecha real de hoy (del servidor)
+    const today = new Date('{{ today_str }}' + 'T12:00:00');
     
     // selectedDate = fecha actual de la URL (la que se está mostrando)
     let selectedDate = new Date(fechaActualStr + 'T12:00:00');
