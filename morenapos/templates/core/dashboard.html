@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+
+{% block title %}MorenaPOS - Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --color-primary: #A40130;
+        --color-secondary: #FC523B;
+        --color-accent: #FFC801;
+        --color-warning: #FFA513;
+        --color-danger: #D20B36;
+    }
+    
+    .card-hover {
+        transition: all 0.3s ease;
+    }
+    
+    .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+    
+    .bg-gradient-card-1 {
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-danger) 100%);
+    }
+    
+    .bg-gradient-card-2 {
+        background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-warning) 100%);
+    }
+    
+    .bg-gradient-card-3 {
+        background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-warning) 100%);
+    }
+    
+    .bg-gradient-card-4 {
+        background: linear-gradient(135deg, var(--color-danger) 0%, var(--color-primary) 100%);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="py-6">
+    <!-- Header del dashboard -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-white">
+            <i class="fas fa-tachometer-alt mr-3"></i>Dashboard
+        </h1>
+        <div class="flex flex-col md:flex-row md:items-center justify-between mt-4">
+            <div class="flex items-center space-x-4">
+                <div class="px-4 py-2 bg-gray-800 rounded-lg border border-gray-700">
+                    <p class="text-sm text-gray-300">
+                        <i class="fas fa-store mr-2"></i>
+                        <span class="font-medium">{{ sede.nombre }}</span>
+                    </p>
+                </div>
+                <div class="px-4 py-2 bg-gray-800 rounded-lg border border-gray-700">
+                    <p class="text-sm text-gray-300">
+                        <i class="fas fa-user mr-2"></i>
+                        <span class="font-medium">{{ usuario.get_full_name|default:usuario.username }}</span>
+                    </p>
+                </div>
+            </div>
+            
+            <div class="mt-4 md:mt-0">
+                <div class="flex items-center space-x-2">
+                    <div class="h-3 w-3 rounded-full bg-green-500 animate-pulse"></div>
+                    <span class="text-sm text-gray-300">Conectado a Azure SQL</span>
+                </div>
+                <p class="text-xs text-gray-500 text-right mt-1">
+                    <i class="fas fa-clock mr-1"></i> {% now "H:i" %}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Estadísticas rápidas -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="card-hover bg-gradient-card-1 rounded-xl p-6 text-white shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm opacity-90">Ventas Hoy</p>
+                    <p class="text-3xl font-bold mt-2">S/ 1,240.50</p>
+                    <p class="text-xs opacity-80 mt-1">
+                        <i class="fas fa-arrow-up mr-1"></i> 12% vs ayer
+                    </p>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
+                    <i class="fas fa-shopping-cart text-xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-hover bg-gradient-card-2 rounded-xl p-6 text-white shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm opacity-90">Transacciones</p>
+                    <p class="text-3xl font-bold mt-2">24</p>
+                    <p class="text-xs opacity-80 mt-1">
+                        <i class="fas fa-check-circle mr-1"></i> 100% exitosas
+                    </p>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
+                    <i class="fas fa-receipt text-xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-hover bg-gradient-card-3 rounded-xl p-6 text-white shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm opacity-90">Productos Vendidos</p>
+                    <p class="text-3xl font-bold mt-2">156</p>
+                    <p class="text-xs opacity-80 mt-1">
+                        <i class="fas fa-boxes mr-1"></i> 18 categorías
+                    </p>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
+                    <i class="fas fa-utensils text-xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-hover bg-gradient-card-4 rounded-xl p-6 text-white shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm opacity-90">Tiempo Promedio</p>
+                    <p class="text-3xl font-bold mt-2">2.4 min</p>
+                    <p class="text-xs opacity-80 mt-1">
+                        <i class="fas fa-bolt mr-1"></i> <80 ms respuesta
+                    </p>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
+                    <i class="fas fa-stopwatch text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Acciones rápidas -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Módulo de Caja -->
+        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <h3 class="text-xl font-bold text-white mb-4">
+                <i class="fas fa-cash-register mr-2"></i>Módulo de Caja
+            </h3>
+            <p class="text-gray-300 mb-6">
+                Interfaz optimizada para ventas rápidas con HTMX y localStorage.
+            </p>
+            <div class="space-y-3">
+                <a href="{% url 'ventas:caja' %}"
+                   class="block w-full py-3 px-4 bg-gradient-to-r from-[#A40130] to-[#D20B36] text-white font-medium rounded-lg text-center hover:opacity-90 transition duration-200">
+                    <i class="fas fa-play mr-2"></i>Abrir Caja
+                </a>
+                <div class="grid grid-cols-2 gap-3">
+                    <button class="py-2 px-4 bg-gray-700 text-gray-300 rounded-lg text-sm hover:bg-gray-600 transition duration-200">
+                        <i class="fas fa-history mr-1"></i>Historial
+                    </button>
+                    <button class="py-2 px-4 bg-gray-700 text-gray-300 rounded-lg text-sm hover:bg-gray-600 transition duration-200">
+                        <i class="fas fa-chart-bar mr-1"></i>Reportes
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Facturación Electrónica -->
+        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <h3 class="text-xl font-bold text-white mb-4">
+                <i class="fas fa-file-invoice-dollar mr-2"></i>Facturación
+            </h3>
+            <p class="text-gray-300 mb-6">
+                Integración con Nubefact para facturación electrónica asíncrona.
+            </p>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between p-3 bg-gray-900/50 rounded-lg">
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span class="text-gray-300">Cola activa</span>
+                    </div>
+                    <span class="text-sm text-gray-400">django-q2</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <button class="py-2 px-4 bg-gray-700 text-gray-300 rounded-lg text-sm hover:bg-gray-600 transition duration-200">
+                        <i class="fas fa-sync mr-1"></i>Sincronizar
+                    </button>
+                    <button class="py-2 px-4 bg-gray-700 text-gray-300 rounded-lg text-sm hover:bg-gray-600 transition duration-200">
+                        <i class="fas fa-list mr-1"></i>Pendientes
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sistema y Configuración -->
+        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <h3 class="text-xl font-bold text-white mb-4">
+                <i class="fas fa-cog mr-2"></i>Sistema
+            </h3>
+            <p class="text-gray-300 mb-6">
+                Monitoreo de rendimiento y configuración multi-sede.
+            </p>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-300">Consumo RAM</span>
+                    <div class="flex items-center">
+                        <div class="w-24 h-2 bg-gray-700 rounded-full overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-[#FFC801] to-[#FFA513]" style="width: 65%"></div>
+                        </div>
+                        <span class="text-sm text-gray-400 ml-2">98 MB</span>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-300">Workers Gunicorn</span>
+                    <span class="px-3 py-1 bg-gray-900 text-gray-300 rounded-full text-sm">2 activos</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-300">Conexión DB</span>
+                    <div class="flex items-center">
+                        <div class="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
+                        <span class="text-sm text-green-400">Azure SQL</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Información técnica -->
+    <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
+        <h3 class="text-xl font-bold text-white mb-4">
+            <i class="fas fa-microchip mr-2"></i>Especificaciones Técnicas
+        </h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="p-4 bg-gray-900/30 rounded-lg">
+                <p class="text-sm text-gray-400">Frontend</p>
+                <p class="text-lg font-medium text-white">HTMX + Alpine</p>
+                <p class="text-xs text-gray-500">Carga <200 KB</p>
+            </div>
+            <div class="p-4 bg-gray-900/30 rounded-lg">
+                <p class="text-sm text-gray-400">Backend</p>
+                <p class="text-lg font-medium text-white">Django 5.x</p>
+                <p class="text-xs text-gray-500">Python 3.12+</p>
+            </div>
+            <div class="p-4 bg-gray-900/30 rounded-lg">
+                <p class="text-sm text-gray-400">Base de Datos</p>
+                <p class="text-lg font-medium text-white">Azure SQL</p>
+                <p class="text-xs text-gray-500">48 tablas</p>
+            </div>
+            <div class="p-4 bg-gray-900/30 rounded-lg">
+                <p class="text-sm text-gray-400">Despliegue</p>
+                <p class="text-lg font-medium text-white">App Service B1</p>
+                <p class="text-xs text-gray-500">~80-100 MB RAM</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

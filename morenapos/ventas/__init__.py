@@ -1,0 +1,1 @@
+# Ventas application for MorenaPOS

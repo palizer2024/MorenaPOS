@@ -1,0 +1,30 @@
+# Django y dependencias principales - versiones compatibles con Python 3.14
+Django==5.0.6
+django-mssql-backend==2.8.1
+
+# Frontend y UI
+django-htmx==1.20.0
+
+# Procesamiento asíncrono (versión ligera)
+django-q2==1.10.0
+
+# Validación de datos (versión compatible)
+pydantic==2.6.4
+
+# Seguridad y autenticación
+django-cors-headers==4.4.0
+django-ratelimit==3.0.1
+
+# Utilidades
+python-dotenv==1.0.1
+whitenoise==6.6.0
+
+# Desarrollo
+python-decouple==3.8
+
+# Facturación electrónica (Nubefact)
+requests==2.31.0
+xmltodict==0.13.0
+
+# Nota: pyodbc puede requerir instalación manual del driver ODBC
+# Para desarrollo, podemos usar sqlite temporalmente

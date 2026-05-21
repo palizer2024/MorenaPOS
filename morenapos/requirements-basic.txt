@@ -1,0 +1,6 @@
+# Dependencias básicas para MorenaPOS
+Django==5.0.6
+django-htmx==1.20.0
+python-dotenv==1.0.1
+whitenoise==6.6.0
+requests==2.31.0

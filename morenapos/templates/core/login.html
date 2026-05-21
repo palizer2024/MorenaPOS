@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}MorenaPOS - Iniciar Sesión{% endblock %}
+
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+        background-color: #FFC801 !important;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+    .login-card {
+        background-color: #FC523B;
+        border-radius: 16px;
+        padding: 32px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    }
+    .login-card input,
+    .login-card select {
+        width: 100%;
+        padding: 12px 16px;
+        border: none;
+        border-radius: 8px;
+        background-color: #fff;
+        color: #333;
+        font-size: 14px;
+        outline: none;
+    }
+    .login-card select {
+        appearance: auto;
+    }
+    .login-card label {
+        display: block;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
+    .login-card .field-group {
+        margin-bottom: 16px;
+    }
+    .btn-login {
+        width: 100%;
+        padding: 14px;
+        border: none;
+        border-radius: 8px;
+        background-color: #FFC801;
+        color: #333;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: opacity 0.2s;
+    }
+    .btn-login:hover {
+        opacity: 0.9;
+    }
+    .logo {
+        text-align: center;
+        margin-bottom: 24px;
+    }
+    .logo h1 {
+        color: #fff;
+        font-size: 28px;
+        font-weight: 800;
+    }
+    .logo span {
+        color: #FFC801;
+    }
+    .logo p {
+        color: rgba(255,255,255,0.8);
+        font-size: 13px;
+        margin-top: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:center;height:100vh;padding:16px;">
+    <div class="login-card">
+        <div class="logo">
+            <h1>Morena<span>POS</span></h1>
+            <p>Iniciar Sesión</p>
+        </div>
+
+        <form method="POST" action="{% url 'login' %}">
+            {% csrf_token %}
+
+            <div class="field-group">
+                <label>Sede</label>
+                <select name="sede" required>
+                    <option value="" selected disabled>-- Seleccione una sede --</option>
+                    {% for sede in sedes %}
+                    <option value="{{ sede.id }}">{{ sede.nombre }}</option>
+                    {% empty %}
+                    <option value="" disabled>No hay sedes disponibles</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="field-group">
+                <label>Turno</label>
+                <select name="turno" required>
+                    <option value="" selected disabled>-- Seleccione turno --</option>
+                    <option value="mañana">Mañana</option>
+                    <option value="tarde">Tarde</option>
+                    <option value="noche">Noche</option>
+                </select>
+            </div>
+
+            <div class="field-group">
+                <label>Usuario</label>
+                <input type="text" name="username" placeholder="Ingrese su usuario" required autofocus>
+            </div>
+
+            <div class="field-group">
+                <label>Contraseña</label>
+                <input type="password" name="password" placeholder="Ingrese su contraseña" required>
+            </div>
+
+            <button type="submit" class="btn-login">
+                Iniciar Sesión
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,292 @@
+/* 
+ * MorenaPOS - Estilos principales
+ * Paleta de colores: #FFC801, #FC523B, #FFA513, #A40130, #D20B36
+ */
+
+:root {
+    /* Colores principales */
+    --color-morena-yellow: #FFC801;
+    --color-morena-orange: #FC523B;
+    --color-morena-light-orange: #FFA513;
+    --color-morena-dark-red: #A40130;
+    --color-morena-red: #D20B36;
+    
+    /* Colores de fondo */
+    --color-bg-dark: #0f172a;
+    --color-bg-darker: #0a0f1c;
+    --color-bg-card: #1e293b;
+    --color-bg-card-hover: #334155;
+    
+    /* Colores de texto */
+    --color-text-primary: #f8fafc;
+    --color-text-secondary: #cbd5e1;
+    --color-text-muted: #94a3b8;
+    
+    /* Bordes */
+    --color-border: #334155;
+    --color-border-light: #475569;
+    
+    /* Sombras */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Estilos base */
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--color-bg-dark);
+    color: var(--color-text-primary);
+    line-height: 1.6;
+}
+
+/* Utilidades de color */
+.bg-morena-yellow { background-color: var(--color-morena-yellow); }
+.bg-morena-orange { background-color: var(--color-morena-orange); }
+.bg-morena-light-orange { background-color: var(--color-morena-light-orange); }
+.bg-morena-dark-red { background-color: var(--color-morena-dark-red); }
+.bg-morena-red { background-color: var(--color-morena-red); }
+
+.text-morena-yellow { color: var(--color-morena-yellow); }
+.text-morena-orange { color: var(--color-morena-orange); }
+.text-morena-light-orange { color: var(--color-morena-light-orange); }
+.text-morena-dark-red { color: var(--color-morena-dark-red); }
+.text-morena-red { color: var(--color-morena-red); }
+
+.border-morena-yellow { border-color: var(--color-morena-yellow); }
+.border-morena-orange { border-color: var(--color-morena-orange); }
+
+/* Gradientes */
+.gradient-morena-primary {
+    background: linear-gradient(135deg, var(--color-morena-dark-red) 0%, var(--color-morena-red) 100%);
+}
+
+.gradient-morena-secondary {
+    background: linear-gradient(135deg, var(--color-morena-orange) 0%, var(--color-morena-light-orange) 100%);
+}
+
+.gradient-morena-accent {
+    background: linear-gradient(135deg, var(--color-morena-yellow) 0%, var(--color-morena-light-orange) 100%);
+}
+
+/* Componentes */
+.card {
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    border-color: var(--color-morena-yellow);
+    box-shadow: var(--shadow-lg);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--color-morena-dark-red) 0%, var(--color-morena-red) 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #8B0128 0%, #B0092D 100%);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, var(--color-morena-orange) 0%, var(--color-morena-light-orange) 100%);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #E3492B 0%, #E68C13 100%);
+    transform: translateY(-2px);
+}
+
+.btn-accent {
+    background-color: var(--color-morena-yellow);
+    color: #1e293b;
+}
+
+.btn-accent:hover {
+    background-color: #E6B301;
+    transform: translateY(-2px);
+}
+
+/* Formularios */
+.form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background-color: rgba(30, 41, 59, 0.7);
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    color: var(--color-text-primary);
+    transition: all 0.3s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--color-morena-yellow);
+    box-shadow: 0 0 0 3px rgba(255, 200, 1, 0.1);
+}
+
+.form-select {
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 1rem;
+    background-color: rgba(30, 41, 59, 0.7);
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    color: var(--color-text-primary);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.25rem;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: var(--color-morena-yellow);
+    box-shadow: 0 0 0 3px rgba(255, 200, 1, 0.1);
+}
+
+/* Animaciones */
+@keyframes pulse-morena {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.pulse-morena {
+    animation: pulse-morena 2s infinite;
+}
+
+@keyframes slide-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slide-in {
+    animation: slide-in 0.3s ease-out;
+}
+
+/* Utilidades para HTMX */
+.htmx-indicator {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.htmx-request .htmx-indicator {
+    opacity: 1;
+}
+
+.htmx-request.htmx-indicator {
+    opacity: 1;
+}
+
+/* Estilos específicos para la caja */
+.pos-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+    .pos-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.pos-item {
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pos-item:hover {
+    background-color: var(--color-bg-card-hover);
+    border-color: var(--color-morena-yellow);
+    transform: translateY(-2px);
+}
+
+.pos-item.selected {
+    background-color: rgba(255, 200, 1, 0.1);
+    border-color: var(--color-morena-yellow);
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-bg-card);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-morena-dark-red);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-morena-red);
+}
+
+/* Estilos para mensajes */
+.alert {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid;
+}
+
+.alert-success {
+    background-color: rgba(34, 197, 94, 0.1);
+    border-left-color: #22c55e;
+    color: #86efac;
+}
+
+.alert-error {
+    background-color: rgba(239, 68, 68, 0.1);
+    border-left-color: var(--color-morena-red);
+    color: #fca5a5;
+}
+
+.alert-warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    border-left-color: var(--color-morena-light-orange);
+    color: #fcd34d;
+}
+
+.alert-info {
+    background-color: rgba(59, 130, 246, 0.1);
+    border-left-color: #3b82f6;
+    color: #93c5fd;
+}
