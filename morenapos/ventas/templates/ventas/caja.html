@@ -1,44 +1,349 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}MorenaPOS - Caja{% endblock %}
 
+{% block footer %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    html, body { height: 100%; overflow: hidden; }
+    
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        padding: 6px;
+        height: calc(100vh - 50px);
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    .card {
+        background: #fff;
+        border-radius: 6px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        height: 100%;
+    }
+    
+    .card-header {
+        background: #FC523B;
+        color: #fff;
+        padding: 5px 10px;
+        font-size: 11px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex-shrink: 0;
+    }
+    
+    .card-header i {
+        font-size: 11px;
+    }
+    
+    .card-body {
+        padding: 6px;
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+    }
+    
+    .card-body::-webkit-scrollbar {
+        width: 4px;
+    }
+    .card-body::-webkit-scrollbar-thumb {
+        background: #ddd;
+        border-radius: 2px;
+    }
+    
+    /* ===== CALENDARIO ===== */
+    .calendar-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 3px;
+    }
+    .calendar-nav button {
+        background: #f0f0f0;
+        border: none;
+        border-radius: 3px;
+        padding: 1px 6px;
+        cursor: pointer;
+        font-size: 10px;
+        font-weight: 600;
+        color: #555;
+    }
+    .calendar-nav button:hover {
+        background: #FC523B;
+        color: #fff;
+    }
+    .calendar-nav .month-year {
+        font-size: 11px;
+        font-weight: 700;
+        color: #333;
+    }
+    
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 1px;
+        text-align: center;
+    }
+    .calendar-grid .day-header {
+        font-size: 8px;
+        font-weight: 700;
+        color: #999;
+        padding: 1px 0;
+        text-transform: uppercase;
+    }
+    .calendar-grid .day {
+        font-size: 10px;
+        padding: 2px 0;
+        border-radius: 3px;
+        cursor: pointer;
+        color: #333;
+    }
+    .calendar-grid .day:hover {
+        background: #FFC801;
+        color: #333;
+    }
+    .calendar-grid .day.other-month {
+        color: #ddd;
+    }
+    .calendar-grid .day.today {
+        background: #FFC801;
+        font-weight: 700;
+    }
+    .calendar-grid .day.selected {
+        background: #FC523B;
+        color: #fff;
+        font-weight: 700;
+    }
+    
+    /* ===== TABLA DE TICKETS ===== */
+    .tickets-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 10px;
+        margin-top: 4px;
+    }
+    .tickets-table thead th {
+        background: #f8f8f8;
+        color: #666;
+        font-weight: 600;
+        font-size: 9px;
+        text-transform: uppercase;
+        padding: 3px 6px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+        position: sticky;
+        top: 0;
+    }
+    .tickets-table tbody td {
+        padding: 2px 6px;
+        border-bottom: 1px solid #f5f5f5;
+        color: #333;
+    }
+    .tickets-table tbody tr:hover {
+        background: #fff8e6;
+    }
+    .tickets-table .badge-duplicado {
+        display: inline-block;
+        background: #ffd700;
+        color: #333;
+        font-size: 7px;
+        font-weight: 700;
+        padding: 0 3px;
+        border-radius: 2px;
+    }
+    .tickets-table .fecha-col {
+        font-size: 9px;
+        color: #666;
+        white-space: nowrap;
+    }
+    .tickets-table .total-col {
+        font-weight: 700;
+        color: #FC523B;
+    }
+    .tickets-table .empty-row td {
+        text-align: center;
+        color: #999;
+        padding: 10px 6px;
+        font-style: italic;
+        font-size: 10px;
+    }
+    
+    /* ===== CENTER PLACEHOLDER ===== */
+    .placeholder-center {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #ccc;
+        font-size: 11px;
+    }
+    
+    @media (max-width: 1024px) {
+        .dashboard-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+        .dashboard-grid { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div style="padding: 32px; max-width: 600px; margin: 0 auto;">
-    <div style="background: #fff; border-radius: 12px; padding: 32px; box-shadow: 0 2px 12px rgba(0,0,0,0.1);">
-        <h1 style="font-size: 24px; font-weight: 700; color: #333; margin-bottom: 24px;">
-            <i class="fas fa-cash-register" style="color: #FC523B; margin-right: 8px;"></i>
-            Módulo de Caja
-        </h1>
-
-        <div style="border-top: 2px solid #FFC801; padding-top: 20px;">
-            <div style="margin-bottom: 16px;">
-                <label style="font-size: 12px; color: #999; text-transform: uppercase; font-weight: 600;">Usuario</label>
-                <p style="font-size: 18px; color: #333; font-weight: 600;">{{ usuario_nombre }}</p>
-                <p style="font-size: 13px; color: #666;">@{{ usuario_login }}</p>
-            </div>
-
-            <div style="margin-bottom: 16px;">
-                <label style="font-size: 12px; color: #999; text-transform: uppercase; font-weight: 600;">Sede</label>
-                <p style="font-size: 18px; color: #333; font-weight: 600;">{{ sede_nombre }}</p>
-            </div>
-
-            <div style="margin-bottom: 16px;">
-                <label style="font-size: 12px; color: #999; text-transform: uppercase; font-weight: 600;">Turno</label>
-                <p style="font-size: 18px; color: #333; font-weight: 600; text-transform: capitalize;">{{ turno }}</p>
-            </div>
-
-            <div style="margin-bottom: 16px;">
-                <label style="font-size: 12px; color: #999; text-transform: uppercase; font-weight: 600;">Rol</label>
-                <p style="font-size: 18px; color: #333; font-weight: 600;">{{ rol }}</p>
-            </div>
+<div class="dashboard-grid">
+    <!-- TARJETA 1: Calendario + Tickets -->
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-calendar-alt"></i>
+            Tickets - {{ sede_nombre }}
         </div>
-
-        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #eee; text-align: center;">
-            <p style="color: #999; font-size: 13px;">
-                <i class="fas fa-info-circle" style="color: #FFC801; margin-right: 4px;"></i>
-                Módulo en construcción - próximamente
-            </p>
+        <div class="card-body">
+            <!-- Calendario -->
+            <div id="calendar"></div>
+            
+            <!-- Tabla de tickets -->
+            <table class="tickets-table">
+                <thead>
+                    <tr>
+                        <th>Ticket</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in tickets %}
+                    <tr>
+                        <td>
+                            {{ t.serie }}{{ t.correlativo }}
+                            {% if t.duplicado %}<span class="badge-duplicado">DUP</span>{% endif %}
+                        </td>
+                        <td class="fecha-col">{{ t.created|date:'d/m/Y H:i' }}</td>
+                        <td>{{ t.cliente|default:'-' }}</td>
+                        <td class="total-col">S/ {{ t.total|floatformat:2 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr class="empty-row">
+                        <td colspan="4">
+                            <i class="fas fa-inbox" style="margin-right: 4px;"></i>
+                            No hay tickets para esta fecha
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- TARJETA 2 -->
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-chart-bar"></i>
+            Resumen
+        </div>
+        <div class="placeholder-center">
+            <i class="fas fa-tools" style="margin-right:6px;"></i> Próximamente
+        </div>
+    </div>
+    
+    <!-- TARJETA 3 -->
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-cog"></i>
+            Acciones
+        </div>
+        <div class="placeholder-center">
+            <i class="fas fa-tools" style="margin-right:6px;"></i> Próximamente
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const fechaActual = '{{ fecha_actual_str }}';
+    
+    let currentDate = new Date(fechaActual + 'T12:00:00');
+    let selectedDate = new Date(fechaActual + 'T12:00:00');
+    
+    function renderCalendar() {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+        
+        const today = new Date(fechaActual + 'T12:00:00');
+        const todayStr = today.toISOString().split('T')[0];
+        const selectedStr = selectedDate.toISOString().split('T')[0];
+        
+        const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                            'Julio','Agosto','Setiembre','Octubre','Noviembre','Diciembre'];
+        const dayNames = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+        
+        let html = '<div class="calendar-nav">';
+        html += '<button onclick="window.__calPrev()"><i class="fas fa-chevron-left"></i></button>';
+        html += '<span class="month-year">' + monthNames[month] + ' ' + year + '</span>';
+        html += '<button onclick="window.__calNext()"><i class="fas fa-chevron-right"></i></button>';
+        html += '</div>';
+        
+        html += '<div class="calendar-grid">';
+        for (let d of dayNames) {
+            html += '<div class="day-header">' + d + '</div>';
+        }
+        
+        const startDay = firstDay === 0 ? 6 : firstDay - 1;
+        for (let i = startDay - 1; i >= 0; i--) {
+            html += '<div class="day other-month">' + (daysInPrevMonth - i) + '</div>';
+        }
+        
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateObj = new Date(year, month, d);
+            const dateStr = dateObj.toISOString().split('T')[0];
+            let cls = 'day';
+            if (dateStr === todayStr) cls += ' today';
+            if (dateStr === selectedStr) cls += ' selected';
+            html += '<div class="' + cls + '" data-date="' + dateStr + '" onclick="window.__calSelect(\'' + dateStr + '\')">' + d + '</div>';
+        }
+        
+        const totalCells = startDay + daysInMonth;
+        const remaining = (7 - (totalCells % 7)) % 7;
+        for (let d = 1; d <= remaining; d++) {
+            html += '<div class="day other-month">' + d + '</div>';
+        }
+        
+        html += '</div>';
+        
+        document.getElementById('calendar').innerHTML = html;
+    }
+    
+    window.__calPrev = function() {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderCalendar();
+    };
+    
+    window.__calNext = function() {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        renderCalendar();
+    };
+    
+    window.__calSelect = function(dateStr) {
+        selectedDate = new Date(dateStr + 'T12:00:00');
+        window.location.href = '?fecha=' + dateStr;
+    };
+    
+    renderCalendar();
+})();
+</script>
 {% endblock %}
