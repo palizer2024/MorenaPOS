@@ -219,8 +219,16 @@
         border-bottom: 1px solid #f5f5f5;
         color: #333;
     }
+    .tickets-table tbody tr {
+        cursor: pointer;
+    }
     .tickets-table tbody tr:hover {
         background: #fff8e6;
+    }
+    .tickets-table tbody tr.selected {
+        background: #FFF3CD;
+        outline: 2px solid #FFC801;
+        outline-offset: -2px;
     }
     .tickets-table .badge-duplicado {
         display: inline-block;
@@ -247,6 +255,111 @@
         font-style: italic;
         font-size: 10px;
     }
+    
+    /* ===== COMPROBANTE (TARJETA 2) ===== */
+    .comprobante-tabs {
+        display: flex;
+        gap: 3px;
+        margin-bottom: 4px;
+    }
+    .comprobante-tabs .tab-btn {
+        flex: 1;
+        padding: 3px 6px;
+        font-size: 10px;
+        font-weight: 700;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        cursor: pointer;
+        text-align: center;
+        background: #f5f5f5;
+        color: #666;
+        transition: all 0.15s;
+    }
+    .comprobante-tabs .tab-btn.active {
+        background: #FC523B;
+        border-color: #FC523B;
+        color: #fff;
+    }
+    .comprobante-tabs .tab-btn:hover:not(.active) {
+        background: #e8e8e8;
+    }
+    
+    .comprobante-field {
+        margin-bottom: 3px;
+    }
+    .comprobante-field label {
+        display: block;
+        font-size: 9px;
+        font-weight: 600;
+        color: #666;
+        text-transform: uppercase;
+        margin-bottom: 1px;
+    }
+    .comprobante-field input,
+    .comprobante-field textarea {
+        width: 100%;
+        padding: 2px 5px;
+        font-size: 10px;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        outline: none;
+        background: #fff;
+        color: #333;
+    }
+    .comprobante-field input:focus,
+    .comprobante-field textarea:focus {
+        border-color: #FC523B;
+    }
+    .comprobante-field input[type="text"] {
+        height: 22px;
+    }
+    .comprobante-field textarea {
+        resize: none;
+        height: 32px;
+    }
+    
+    /* ===== DETALLE PRODUCTOS (grid) ===== */
+    .detalle-grid {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9px;
+        margin-top: 3px;
+    }
+    .detalle-grid thead th {
+        background: #f0f0f0;
+        color: #555;
+        font-weight: 600;
+        font-size: 8px;
+        text-transform: uppercase;
+        padding: 2px 4px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+        position: sticky;
+        top: 0;
+    }
+    .detalle-grid tbody td {
+        padding: 2px 4px;
+        border-bottom: 1px solid #f0f0f0;
+        color: #333;
+    }
+    .detalle-grid .dg-cant { text-align: center; }
+    .detalle-grid .dg-precio { text-align: right; }
+    .detalle-grid .dg-total { text-align: right; font-weight: 600; color: #FC523B; }
+    .detalle-grid .dg-empty td {
+        text-align: center;
+        color: #bbb;
+        padding: 8px 4px;
+        font-style: italic;
+        font-size: 9px;
+    }
+    .detalle-grid .dg-total-row td {
+        border-top: 2px solid #FC523B;
+        font-weight: 700;
+        font-size: 10px;
+        padding: 3px 4px;
+    }
+    .detalle-grid .dg-total-row .dg-total-label { text-align: right; color: #333; }
+    .detalle-grid .dg-total-row .dg-total-val { text-align: right; color: #FC523B; }
     
     /* ===== CENTER PLACEHOLDER ===== */
     .placeholder-center {
@@ -307,7 +420,7 @@
                 </thead>
                 <tbody>
                     {% for t in tickets %}
-                    <tr>
+                    <tr data-ticket-id="{{ t.id }}" data-ticket-total="{{ t.total }}" onclick="window.__selectTicket(this, {{ t.id }})">
                         <td>
                             {{ t.serie }}{{ t.correlativo }}
                             {% if t.duplicado %}<span class="badge-duplicado">DUP</span>{% endif %}
@@ -329,18 +442,56 @@
         </div>
     </div>
     
-    <!-- TARJETA 2 -->
+    <!-- TARJETA 2: Comprobante (Boleta / Factura) -->
     <div class="card">
         <div class="card-header">
-            <i class="fas fa-chart-bar"></i>
-            Resumen
+            <i class="fas fa-file-invoice"></i>
+            Comprobante
         </div>
-        <div class="placeholder-center">
-            <i class="fas fa-tools" style="margin-right:6px;"></i> Próximamente
+        <div class="card-body">
+            <!-- Botones BOLETA / FACTURA -->
+            <div class="comprobante-tabs">
+                <button class="tab-btn active" id="btnBoleta" onclick="window.__setTipo('boleta')">BOLETA</button>
+                <button class="tab-btn" id="btnFactura" onclick="window.__setTipo('factura')">FACTURA</button>
+            </div>
+            
+            <!-- Campos del comprobante -->
+            <div class="comprobante-field" id="dniField">
+                <label for="txtDni">INGRESAR DNI:</label>
+                <input type="text" id="txtDni" maxlength="8" inputmode="numeric" pattern="[0-9]*" onkeypress="return event.charCode >= 48 && event.charCode <= 57" placeholder="12345678">
+            </div>
+            <div class="comprobante-field">
+                <label for="txtNombre">NOMBRE:</label>
+                <input type="text" id="txtNombre" placeholder="Nombre del cliente">
+            </div>
+            <div class="comprobante-field">
+                <label for="txtDireccion">DIRECCIÓN:</label>
+                <textarea id="txtDireccion" placeholder="Dirección del cliente"></textarea>
+            </div>
+            
+            <!-- Grid de detalle de productos -->
+            <table class="detalle-grid" id="detalleGrid">
+                <thead>
+                    <tr>
+                        <th style="width:40%;">Producto</th>
+                        <th style="width:12%;" class="dg-cant">Cant.</th>
+                        <th style="width:24%;" class="dg-precio">P.Unit</th>
+                        <th style="width:24%;" class="dg-total">Total</th>
+                    </tr>
+                </thead>
+                <tbody id="detalleBody">
+                    <tr class="dg-empty">
+                        <td colspan="4">
+                            <i class="fas fa-hand-pointer" style="margin-right:4px;"></i>
+                            Seleccione un ticket
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
     
-    <!-- TARJETA 3 -->
+    <!-- TARJETA 3: Acciones -->
     <div class="card">
         <div class="card-header">
             <i class="fas fa-cog"></i>
@@ -482,6 +633,83 @@ document.addEventListener('DOMContentLoaded', function() {
     window.__modalSelect = function(dateStr) {
         document.getElementById('calModal').classList.remove('active');
         goToDate(dateStr);
+    };
+    
+    // === COMPROBANTE: cambiar tipo (Boleta / Factura) ===
+    window.__setTipo = function(tipo) {
+        const btnBoleta = document.getElementById('btnBoleta');
+        const btnFactura = document.getElementById('btnFactura');
+        const dniField = document.getElementById('dniField');
+        const lblDni = dniField ? dniField.querySelector('label') : null;
+        
+        if (tipo === 'boleta') {
+            btnBoleta.classList.add('active');
+            btnFactura.classList.remove('active');
+            if (lblDni) lblDni.textContent = 'INGRESAR DNI:';
+            if (dniField) dniField.style.display = 'block';
+        } else {
+            btnFactura.classList.add('active');
+            btnBoleta.classList.remove('active');
+            if (lblDni) lblDni.textContent = 'INGRESAR RUC:';
+            // RUC field stays visible (same input, different label)
+            if (dniField) dniField.style.display = 'block';
+        }
+    };
+    
+    // === COMPROBANTE: seleccionar ticket y cargar detalle ===
+    window.__selectTicket = function(row, ticketId) {
+        // Highlight selected row
+        document.querySelectorAll('.tickets-table tbody tr').forEach(function(r) {
+            r.classList.remove('selected');
+        });
+        row.classList.add('selected');
+        
+        // Load details via API
+        __loadDetalle(ticketId);
+    };
+    
+    // === COMPROBANTE: cargar detalle desde API ===
+    window.__loadDetalle = function(ticketId) {
+        const tbody = document.getElementById('detalleBody');
+        tbody.innerHTML = '<tr class="dg-empty"><td colspan="4"><i class="fas fa-spinner fa-spin" style="margin-right:4px;"></i> Cargando...</td></tr>';
+        
+        fetch('/api/ticket-detalle/' + ticketId + '/')
+            .then(function(response) {
+                if (!response.ok) throw new Error('Error ' + response.status);
+                return response.json();
+            })
+            .then(function(data) {
+                if (!data.detalles || data.detalles.length === 0) {
+                    tbody.innerHTML = '<tr class="dg-empty"><td colspan="4">Sin productos</td></tr>';
+                    return;
+                }
+                
+                let html = '';
+                let totalGeneral = 0;
+                data.detalles.forEach(function(det) {
+                    const cant = Number(det.cantidad).toFixed(2);
+                    const pu = Number(det.precio_unitario).toFixed(2);
+                    const tot = Number(det.total).toFixed(2);
+                    totalGeneral += Number(det.total);
+                    html += '<tr>' +
+                        '<td>' + det.producto + '</td>' +
+                        '<td class="dg-cant">' + cant + '</td>' +
+                        '<td class="dg-precio">S/ ' + pu + '</td>' +
+                        '<td class="dg-total">S/ ' + tot + '</td>' +
+                        '</tr>';
+                });
+                
+                // Total row
+                html += '<tr class="dg-total-row">' +
+                    '<td colspan="3" class="dg-total-label">TOTAL</td>' +
+                    '<td class="dg-total-val">S/ ' + totalGeneral.toFixed(2) + '</td>' +
+                    '</tr>';
+                
+                tbody.innerHTML = html;
+            })
+            .catch(function(err) {
+                tbody.innerHTML = '<tr class="dg-empty"><td colspan="4"><i class="fas fa-exclamation-triangle" style="margin-right:4px;color:#FC523B;"></i> Error al cargar: ' + err.message + '</td></tr>';
+            });
     };
     
     // Init

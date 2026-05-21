@@ -4,7 +4,5 @@ from . import views
 app_name = 'core_api'
 
 urlpatterns = [
-    # Define your API URL patterns here
-    # Example:
-    # path('endpoint/', views.api_view, name='api_view'),
+    path('ticket-detalle/<int:ticket_id>/', views.api_ticket_detalle, name='ticket_detalle'),
 ]

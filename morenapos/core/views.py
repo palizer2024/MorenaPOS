@@ -9,6 +9,7 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_protect
 from django.core.cache import cache
 from django.urls import reverse
+from django.http import JsonResponse
 from functools import wraps
 import base64
 from django.db import connection
@@ -138,3 +139,47 @@ def dashboard(request):
         'usuario': request.user,
     }
     return render(request, 'core/dashboard.html', context)
+
+
+@login_required
+def api_ticket_detalle(request, ticket_id):
+    """
+    API que retorna el detalle de un ticket (productos, cantidades, precios).
+    Tabla: ticketdet con JOIN a productogeneral para el nombre del producto.
+    """
+    import json
+    from django.utils.timezone import now as tz_now
+    
+    sede_id = request.session.get('sede_id')
+    if not sede_id:
+        return JsonResponse({'error': 'Sin sede'}, status=400)
+    
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT
+                td.Id,
+                td.Id_Producto,
+                ISNULL(pg.Nombre, 'Producto #' + CAST(td.Id_Producto AS VARCHAR)) AS ProductoNombre,
+                td.Cantidad,
+                td.PrecioUnitario,
+                td.Total,
+                td.Id_Ticket
+            FROM ticketdet td
+            LEFT JOIN productogeneral pg ON pg.Id = td.Id_Producto
+            WHERE td.Id_Ticket = %s
+            ORDER BY td.Id
+        """, [ticket_id])
+        rows = cursor.fetchall()
+    
+    detalles = []
+    for row in rows:
+        detalles.append({
+            'id': row[0],
+            'id_producto': row[1],
+            'producto': row[2],
+            'cantidad': float(row[3]) if row[3] else 0,
+            'precio_unitario': float(row[4]) if row[4] else 0,
+            'total': float(row[5]) if row[5] else 0,
+        })
+    
+    return JsonResponse({'detalles': detalles})
