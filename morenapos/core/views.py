@@ -165,7 +165,8 @@ def api_ticket_detalle(request, ticket_id):
                 td.Total,
                 td.Id_Ticket
             FROM ticketdet td
-            LEFT JOIN productogeneral pg ON pg.Id = td.Id_Producto
+            LEFT JOIN producto p ON p.Id = td.Id_Producto
+            LEFT JOIN productogeneral pg ON pg.Id = p.Id_ProductoGeneral
             WHERE td.Id_Ticket = %s
             ORDER BY td.Id
         """, [ticket_id])
