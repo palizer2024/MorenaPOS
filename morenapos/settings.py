@@ -79,7 +79,7 @@ WSGI_APPLICATION = 'morenapos.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': 'morena_clonada',
+        'NAME': 'morena',
         'USER': 'morena159',
         'PASSWORD': 'ZjIckH82e',
         'HOST': 'morena.database.windows.net',

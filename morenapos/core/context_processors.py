@@ -1,25 +1,28 @@
 """
 Context processors para la aplicación core.
 """
-from .models import Sede
+from django.db import connection
 
 
 def sede_context(request):
     """
     Agrega información de sede al contexto de las plantillas.
+    Usa SQL directo para evitar errores por columnas que no existen en la DB.
     """
     context = {}
     
     # Obtener la sede activa de la sesión si existe
     sede_id = request.session.get('sede_id')
     if sede_id:
-        try:
-            sede = Sede.objects.get(id=sede_id, estado=True)
-            context['sede_actual'] = sede
-        except Sede.DoesNotExist:
-            pass
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT id, nombre FROM sede WHERE id = %s AND estado = 1", [sede_id])
+            row = cursor.fetchone()
+            if row:
+                context['sede_actual'] = {'id': row[0], 'nombre': row[1]}
     
     # Obtener todas las sedes activas para menús de selección
-    context['sedes_activas'] = Sede.objects.filter(estado=True)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT id, nombre FROM sede WHERE estado = 1 ORDER BY nombre")
+        context['sedes_activas'] = [{'id': row[0], 'nombre': row[1]} for row in cursor.fetchall()]
     
     return context

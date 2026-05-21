@@ -3,23 +3,42 @@
 {% block title %}MorenaPOS - Caja{% endblock %}
 
 {% block content %}
-<div class="py-6">
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-white">
-            <i class="fas fa-cash-register mr-3"></i>Módulo de Caja
+<div style="padding: 32px; max-width: 600px; margin: 0 auto;">
+    <div style="background: #fff; border-radius: 12px; padding: 32px; box-shadow: 0 2px 12px rgba(0,0,0,0.1);">
+        <h1 style="font-size: 24px; font-weight: 700; color: #333; margin-bottom: 24px;">
+            <i class="fas fa-cash-register" style="color: #FC523B; margin-right: 8px;"></i>
+            Módulo de Caja
         </h1>
-        <p class="text-gray-400 mt-2">
-            <i class="fas fa-store mr-2"></i>{{ sede_nombre|default:'Sin sede' }}
-        </p>
-    </div>
 
-    <div class="bg-gray-800 rounded-xl p-8 border border-gray-700 text-center">
-        <i class="fas fa-tools text-6xl text-gray-600 mb-4"></i>
-        <h2 class="text-2xl font-bold text-white mb-2">Módulo en Construcción</h2>
-        <p class="text-gray-400">El módulo de caja está siendo implementado.</p>
-        <a href="{% url 'dashboard' %}" class="inline-block mt-6 px-6 py-3 bg-gradient-to-r from-[#A40130] to-[#D20B36] text-white font-medium rounded-lg hover:opacity-90 transition duration-200">
-            <i class="fas fa-arrow-left mr-2"></i>Volver al Dashboard
-        </a>
+        <div style="border-top: 2px solid #FFC801; padding-top: 20px;">
+            <div style="margin-bottom: 16px;">
+                <label style="font-size: 12px; color: #999; text-transform: uppercase; font-weight: 600;">Usuario</label>
+                <p style="font-size: 18px; color: #333; font-weight: 600;">{{ usuario_nombre }}</p>
+                <p style="font-size: 13px; color: #666;">@{{ usuario_login }}</p>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="font-size: 12px; color: #999; text-transform: uppercase; font-weight: 600;">Sede</label>
+                <p style="font-size: 18px; color: #333; font-weight: 600;">{{ sede_nombre }}</p>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="font-size: 12px; color: #999; text-transform: uppercase; font-weight: 600;">Turno</label>
+                <p style="font-size: 18px; color: #333; font-weight: 600; text-transform: capitalize;">{{ turno }}</p>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="font-size: 12px; color: #999; text-transform: uppercase; font-weight: 600;">Rol</label>
+                <p style="font-size: 18px; color: #333; font-weight: 600;">{{ rol }}</p>
+            </div>
+        </div>
+
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #eee; text-align: center;">
+            <p style="color: #999; font-size: 13px;">
+                <i class="fas fa-info-circle" style="color: #FFC801; margin-right: 4px;"></i>
+                Módulo en construcción - próximamente
+            </p>
+        </div>
     </div>
 </div>
 {% endblock %}

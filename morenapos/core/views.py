@@ -19,12 +19,11 @@ from .models import Sede, UsuarioSede, Usuario
 def login_required(view_func):
     """
     Decorador personalizado que reemplaza @login_required de Django.
-    Verifica tanto la autenticación de Django como la sesión manual (usuario_id).
-    Esto evita el bucle de redirección infinita entre /dashboard/ y /login/.
+    Verifica si existe 'usuario_id' en la sesión (aunque sea 0).
     """
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
-        if request.user.is_authenticated or request.session.get('usuario_id'):
+        if request.user.is_authenticated or 'usuario_id' in request.session:
             return view_func(request, *args, **kwargs)
         from django.contrib.auth.views import redirect_to_login
         return redirect_to_login(request.get_full_path(), login_url=reverse('login'))
@@ -35,98 +34,47 @@ def login_required(view_func):
 @csrf_protect
 def login_view(request):
     """
-    Vista de inicio de sesión SIMPLE - verifica directamente en tabla usuario.
+    Vista de inicio de sesión simplificada - solo pide sede.
     """
-    # Si ya hay sesión activa (por sesión personalizada o autenticación Django), redirigir a dashboard
-    if request.session.get('usuario_id') or request.user.is_authenticated:
-        return redirect('dashboard')
+    # Si ya hay sesión activa, redirigir a caja
+    if request.session.get('usuario_id'):
+        return redirect('ventas:caja')
+    
+    # Obtener sedes activas con SQL directo
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT id, nombre FROM sede WHERE estado = 1 ORDER BY nombre")
+        sedes = [{'id': row[0], 'nombre': row[1]} for row in cursor.fetchall()]
     
     if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
         sede_id = request.POST.get('sede')
         
-        # Validar campos requeridos
-        if not username or not password or not sede_id:
-            messages.error(request, 'Todos los campos son requeridos.')
-            sedes = Sede.objects.filter(estado=True)
+        if not sede_id:
+            messages.error(request, 'Debe seleccionar una sede.')
             return render(request, 'core/login.html', {'sedes': sedes})
         
-        # Verificar usuario en la tabla usuario directamente
+        # Verificar que la sede existe y está activa
         with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT id, nombres, nombreu, clave, estado, Id_Rol
-                FROM usuario
-                WHERE nombreu = %s AND estado = 1
-            """, [username])
-            row = cursor.fetchone()
+            cursor.execute("SELECT id, nombre FROM sede WHERE id = %s AND estado = 1", [sede_id])
+            sede_row = cursor.fetchone()
         
-        if row:
-            user_id, nombres, nombreu, clave_db, estado, id_rol = row
-            
-            # Verificar contraseña (codificar a base64 para comparar)
-            password_base64 = base64.b64encode(password.encode()).decode()
-            if password_base64 == clave_db:
-                # Verificar acceso a la sede (tabla usuariosede si existe)
-                try:
-                    # Primero verificar si la tabla usuariosede existe
-                    with connection.cursor() as cursor:
-                        cursor.execute("""
-                            SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
-                            WHERE TABLE_NAME = 'usuariosede'
-                        """)
-                        existe_tabla = cursor.fetchone()[0] > 0
-                    
-                    if existe_tabla:
-                        # Verificar acceso en usuariosede
-                        with connection.cursor() as cursor:
-                            cursor.execute("""
-                                SELECT COUNT(*) FROM usuariosede
-                                WHERE id_usuario = %s AND id_sede = %s AND activo = 1
-                            """, [user_id, sede_id])
-                            tiene_acceso = cursor.fetchone()[0] > 0
-                        
-                        if not tiene_acceso:
-                            messages.error(request, 'No tiene acceso a esta sede o la sede está inactiva.')
-                            sedes = Sede.objects.filter(estado=True)
-                            return render(request, 'core/login.html', {'sedes': sedes})
-                    else:
-                        # Si no existe tabla usuariosede, solo verificar que la sede exista y esté activa
-                        try:
-                            sede = Sede.objects.get(id=sede_id, estado=True)
-                        except Sede.DoesNotExist:
-                            messages.error(request, 'Sede no encontrada o inactiva.')
-                            sedes = Sede.objects.filter(estado=True)
-                            return render(request, 'core/login.html', {'sedes': sedes})
-                    
-                    # Obtener información de la sede
-                    try:
-                        sede = Sede.objects.get(id=sede_id, estado=True)
-                    except Sede.DoesNotExist:
-                        messages.error(request, 'Sede no encontrada o inactiva.')
-                        sedes = Sede.objects.filter(estado=True)
-                        return render(request, 'core/login.html', {'sedes': sedes})
-                    
-                    # Login exitoso - crear sesión manual
-                    request.session['usuario_id'] = user_id
-                    request.session['usuario_nombre'] = nombres
-                    request.session['usuario_login'] = nombreu
-                    request.session['usuario_rol'] = id_rol
-                    request.session['sede_id'] = sede.id
-                    request.session['sede_nombre'] = sede.nombre
-                    
-                    messages.success(request, f'Bienvenido, {nombres}')
-                    return redirect('ventas:caja')
-                    
-                except Exception as e:
-                    messages.error(request, f'Error al verificar acceso: {str(e)}')
-            else:
-                messages.error(request, 'Contraseña incorrecta.')
-        else:
-            messages.error(request, 'Usuario no encontrado o inactivo.')
+        if not sede_row:
+            messages.error(request, 'Sede no encontrada o inactiva.')
+            return render(request, 'core/login.html', {'sedes': sedes})
+        
+        sede_id_db, sede_nombre = sede_row
+        
+        # Crear sesión con datos básicos
+        request.session['usuario_id'] = 0
+        request.session['usuario_nombre'] = 'Usuario'
+        request.session['usuario_login'] = 'usuario'
+        request.session['usuario_rol'] = 0
+        request.session['sede_id'] = sede_id_db
+        request.session['sede_nombre'] = sede_nombre
+        request.session['turno'] = ''
+        
+        messages.success(request, f'Bienvenido a {sede_nombre}')
+        return redirect('ventas:caja')
     
-    # GET request: mostrar formulario de login
-    sedes = Sede.objects.filter(estado=True)
     return render(request, 'core/login.html', {'sedes': sedes})
 
 
