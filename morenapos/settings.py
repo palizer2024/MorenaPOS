@@ -157,10 +157,10 @@ TIME_ZONE = 'America/Lima'
 USE_I18N = True
 USE_TZ = True
 
-# Backend de sesiones: usar cache (evita la tabla django_session
-# que tiene columna datetimeoffset no soportada por mssql-django)
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_CACHE_ALIAS = 'default'
+# Backend de sesiones: usar cookies firmadas (evita la tabla django_session
+# que tiene columna datetimeoffset no soportada por mssql-django,
+# y no requiere Redis/cache externo)
+SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
