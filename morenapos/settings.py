@@ -101,7 +101,8 @@ if DB_ENGINE == 'sqlite':
     }
 elif DB_ENGINE == 'mssql':
     # SQL Server (Azure SQL Database)
-    # Usa mssql-django (compatible con Python 3.12)
+    # Usa mssql-django con ODBC Driver
+    # Azure App Service Linux tiene ODBC Driver 17 pre-instalado
     DATABASES = {
         'default': {
             'ENGINE': 'mssql',
@@ -111,7 +112,7 @@ elif DB_ENGINE == 'mssql':
             'HOST': os.environ.get('DB_HOST', 'morena.database.windows.net'),
             'PORT': os.environ.get('DB_PORT', '1433'),
             'OPTIONS': {
-                'driver': os.environ.get('DB_DRIVER', 'ODBC Driver 18 for SQL Server'),
+                'driver': os.environ.get('DB_DRIVER', 'ODBC Driver 17 for SQL Server'),
                 'extra_params': 'TrustServerCertificate=yes;Encrypt=yes',
             },
         }
@@ -198,9 +199,46 @@ CORS_ALLOWED_ORIGINS = os.environ.get(
 ).split(',')
 
 # Security settings for production
+# Azure App Service termina SSL en el frontend (load balancer)
+# Django necesita saber que está detrás de un proxy de confianza
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = os.environ.get('DJANGO_SECURE_SSL', 'False').lower() in ('true', '1')
 SESSION_COOKIE_SECURE = os.environ.get('DJANGO_SESSION_SECURE', 'False').lower() in ('true', '1')
 CSRF_COOKIE_SECURE = os.environ.get('DJANGO_CSRF_SECURE', 'False').lower() in ('true', '1')
+
+# Logging configuration for Azure (captura errores en stderr)
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name}: {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    },
+}
 
 # Cache settings
 CACHES = {

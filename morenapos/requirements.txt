@@ -1,11 +1,12 @@
 # Django y dependencias principales
-Django==5.0.6
+# Django 4.0.x es compatible con mssql-django (que requiere django<4.1)
+Django==4.0.10
 
 # Frontend y UI
 django-htmx==1.20.0
 
 # Base de datos SQL Server (Azure SQL)
-# mssql-django es compatible con Python 3.12
+# mssql-django usa pyodbc - Azure App Service Linux tiene ODBC Driver 17
 mssql-django==1.1.2
 
 # Seguridad y autenticación

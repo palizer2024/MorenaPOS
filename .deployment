@@ -1,3 +1,5 @@
 [config]
 SCM_DO_BUILD_DURING_DEPLOYMENT=true
 ENABLE_ORYX_BUILD=true
+# Forzar a Oryx a detectar Django (busca wsgi.py en la raíz)
+SCM_USE_PYTHON_VENV=true
