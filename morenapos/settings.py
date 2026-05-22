@@ -1,5 +1,6 @@
 """
 Configuración para MorenaPOS.
+Usa variables de entorno para datos sensibles (producción).
 """
 import os
 from pathlib import Path
@@ -8,11 +9,15 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-dev-key-change-in-production'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-key-change-in-production')
+
+# APIPERU token para consulta de DNI/RUC
+APIPERU_TOKEN = os.environ.get('APIPERU_TOKEN', '2bb538e5198295b0f3b7f1a6552df46a640fb362f9f8075dce3820a991ffef3f')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-ALLOWED_HOSTS = ['*']
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('true', '1', 'yes')
+
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -27,7 +32,6 @@ INSTALLED_APPS = [
     'django_htmx',
     # 'django_q',  # Comentado temporalmente debido a problemas de dependencias
     'corsheaders',
-    'debug_toolbar',
     
     # Local apps
     'core',
@@ -50,8 +54,16 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_htmx.middleware.HtmxMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
+
+# Solo agregar debug_toolbar si está instalado y DEBUG=True
+if DEBUG:
+    try:
+        import debug_toolbar
+        INSTALLED_APPS.append('debug_toolbar')
+        MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
+    except ImportError:
+        pass
 
 ROOT_URLCONF = 'morenapos.urls'
 
@@ -76,23 +88,47 @@ WSGI_APPLICATION = 'morenapos.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-DATABASES = {
-    'default': {
-        'ENGINE': 'mssql',
-        'NAME': 'morena',
-        'USER': 'morena159',
-        'PASSWORD': 'ZjIckH82e',
-        'HOST': 'morena.database.windows.net',
-        'PORT': '1433',
-        'OPTIONS': {
-            'driver': 'ODBC Driver 18 for SQL Server',
-            'extra_params': 'TrustServerCertificate=yes' if DEBUG else '',
-        },
+# Usa variables de entorno para producción en Azure
+DB_ENGINE = os.environ.get('DB_ENGINE', 'mssql')
+
+if DB_ENGINE == 'sqlite':
+    # Fallback a SQLite para pruebas locales sin SQL Server
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+elif DB_ENGINE == 'mssql':
+    # SQL Server (Azure SQL Database)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'mssql',
+            'NAME': os.environ.get('DB_NAME', 'morena'),
+            'USER': os.environ.get('DB_USER', 'morena159'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', 'ZjIckH82e'),
+            'HOST': os.environ.get('DB_HOST', 'morena.database.windows.net'),
+            'PORT': os.environ.get('DB_PORT', '1433'),
+            'OPTIONS': {
+                'driver': os.environ.get('DB_DRIVER', 'ODBC Driver 18 for SQL Server'),
+                'extra_params': 'TrustServerCertificate=yes' if DEBUG else '',
+            },
+        }
+    }
+else:
+    # PostgreSQL u otro
+    DATABASES = {
+        'default': {
+            'ENGINE': f'django.db.backends.{DB_ENGINE}',
+            'NAME': os.environ.get('DB_NAME', 'morena'),
+            'USER': os.environ.get('DB_USER', ''),
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+            'HOST': os.environ.get('DB_HOST', 'localhost'),
+            'PORT': os.environ.get('DB_PORT', ''),
+        }
+    }
 
 # Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -145,22 +181,25 @@ Q_CLUSTER = {
     'cpu_affinity': 1,
     'label': 'Django Q',
     'redis': {
-        'host': '127.0.0.1',
-        'port': 6379,
+        'host': os.environ.get('REDIS_HOST', '127.0.0.1'),
+        'port': int(os.environ.get('REDIS_PORT', '6379')),
         'db': 0,
-        'password': None,
+        'password': os.environ.get('REDIS_PASSWORD', None),
         'socket_timeout': 5,
         'retry_on_timeout': True,
     }
 }
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000']
+CORS_ALLOWED_ORIGINS = os.environ.get(
+    'CORS_ALLOWED_ORIGINS',
+    'http://localhost:8000,http://127.0.0.1:8000'
+).split(',')
 
-# Security settings for production (overridden in production.py)
-SECURE_SSL_REDIRECT = False
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
+# Security settings for production
+SECURE_SSL_REDIRECT = os.environ.get('DJANGO_SECURE_SSL', 'False').lower() in ('true', '1')
+SESSION_COOKIE_SECURE = os.environ.get('DJANGO_SESSION_SECURE', 'False').lower() in ('true', '1')
+CSRF_COOKIE_SECURE = os.environ.get('DJANGO_CSRF_SECURE', 'False').lower() in ('true', '1')
 
 # Cache settings
 CACHES = {
@@ -173,3 +212,6 @@ CACHES = {
 # Rate limiting
 RATELIMIT_ENABLE = True
 RATELIMIT_VIEW = 'core.views.rate_limit_exceeded'
+
+# Whitenoise - compresión y caching de archivos estáticos
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
