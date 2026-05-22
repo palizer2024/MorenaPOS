@@ -318,6 +318,225 @@
         height: 32px;
     }
     
+    /* Grupo input + botón buscar */
+    .input-btn-group {
+        display: flex;
+        gap: 3px;
+    }
+    .input-btn-group input {
+        flex: 1;
+        min-width: 0;
+    }
+    .btn-buscar {
+        flex-shrink: 0;
+        width: 28px;
+        height: 22px;
+        padding: 0;
+        border: 1px solid #FC523B;
+        background: #FC523B;
+        color: #fff;
+        border-radius: 3px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        transition: background 0.15s;
+    }
+    .btn-buscar:hover {
+        background: #e0442a;
+    }
+    .btn-buscar:disabled {
+        background: #ccc;
+        border-color: #ccc;
+        cursor: not-allowed;
+    }
+    
+    /* Botón "Buscar RUC/DNI" (abre modal) */
+    .btn-buscar-apiperu {
+        flex-shrink: 0;
+        height: 22px;
+        padding: 0 8px;
+        border: 1px solid #FC523B;
+        background: #FC523B;
+        color: #fff;
+        border-radius: 3px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        font-size: 9px;
+        font-weight: 600;
+        white-space: nowrap;
+        transition: background 0.15s;
+    }
+    .btn-buscar-apiperu:hover {
+        background: #e0442a;
+    }
+    
+    /* ===== MODAL APIPERU ===== */
+    .apiperu-modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.4);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+    }
+    .apiperu-modal-overlay.active {
+        display: flex;
+    }
+    .apiperu-modal {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+        width: 340px;
+        max-width: 90vw;
+        overflow: hidden;
+    }
+    .apiperu-modal-header {
+        background: #FC523B;
+        color: #fff;
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: 700;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .apiperu-modal-close {
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 18px;
+        cursor: pointer;
+        padding: 0 4px;
+        line-height: 1;
+    }
+    .apiperu-modal-close:hover {
+        opacity: 0.8;
+    }
+    .apiperu-modal-body {
+        padding: 12px;
+    }
+    .apiperu-modal-field {
+        margin-bottom: 8px;
+    }
+    .apiperu-modal-field label {
+        display: block;
+        font-size: 10px;
+        font-weight: 600;
+        color: #666;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+    }
+    .apiperu-modal-field input {
+        width: 100%;
+        padding: 6px 8px;
+        font-size: 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        outline: none;
+        color: #333;
+    }
+    .apiperu-modal-field input:focus {
+        border-color: #FC523B;
+    }
+    .apiperu-modal-field input[readonly] {
+        background: #f9f9f9;
+        color: #555;
+    }
+    .apiperu-modal-actions {
+        display: flex;
+        gap: 6px;
+        margin-top: 4px;
+    }
+    .apiperu-modal-btn {
+        flex: 1;
+        padding: 6px 12px;
+        font-size: 11px;
+        font-weight: 700;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        background: #FC523B;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        transition: background 0.15s;
+    }
+    .apiperu-modal-btn:hover {
+        background: #e0442a;
+    }
+    .apiperu-modal-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+    .apiperu-modal-btn-cancel {
+        background: #e0e0e0;
+        color: #666;
+    }
+    .apiperu-modal-btn-cancel:hover {
+        background: #ccc;
+    }
+    .apiperu-modal-result {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #eee;
+    }
+    
+    /* ===== AUTOCOMPLETE SUGGESTIONS ===== */
+    .autocomplete-wrapper {
+        position: relative;
+    }
+    .autocomplete-suggestions {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 28px;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-top: none;
+        border-radius: 0 0 3px 3px;
+        max-height: 120px;
+        overflow-y: auto;
+        z-index: 999;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .autocomplete-suggestions.active {
+        display: block;
+    }
+    .autocomplete-suggestions .sug-item {
+        padding: 3px 6px;
+        font-size: 10px;
+        cursor: pointer;
+        color: #333;
+        border-bottom: 1px solid #f5f5f5;
+    }
+    .autocomplete-suggestions .sug-item:hover {
+        background: #FFF3CD;
+    }
+    .autocomplete-suggestions .sug-item .sug-doc {
+        font-weight: 600;
+        color: #FC523B;
+    }
+    .autocomplete-suggestions .sug-item .sug-name {
+        color: #666;
+        margin-left: 4px;
+    }
+    .autocomplete-suggestions .sug-noresult {
+        padding: 6px;
+        font-size: 10px;
+        color: #999;
+        text-align: center;
+        font-style: italic;
+    }
+    
     /* ===== DETALLE PRODUCTOS (grid) ===== */
     .detalle-grid {
         width: 100%;
@@ -360,15 +579,141 @@
     }
     .detalle-grid .dg-total-row .dg-total-label { text-align: right; color: #333; }
     .detalle-grid .dg-total-row .dg-total-val { text-align: right; color: #FC523B; }
+    .detalle-grid .dg-subtotal-row td,
+    .detalle-grid .dg-igv-row td {
+        font-size: 9px;
+        padding: 2px 4px;
+        border-top: none;
+    }
+    .detalle-grid .dg-subtotal-row .dg-total-label,
+    .detalle-grid .dg-igv-row .dg-total-label { text-align: right; color: #666; }
+    .detalle-grid .dg-subtotal-row .dg-total-val,
+    .detalle-grid .dg-igv-row .dg-total-val { text-align: right; color: #666; }
     
-    /* ===== CENTER PLACEHOLDER ===== */
-    .placeholder-center {
+    /* ===== TARJETA 3: PREVISUALIZACIÓN PDF ===== */
+    .preview-section {
+        display: none;
+        flex-direction: column;
+        height: 100%;
+    }
+    .preview-section.active {
+        display: flex;
+    }
+    .preview-section .preview-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 3px 6px;
+        background: #f0f0f0;
+        border-radius: 3px;
+        margin-bottom: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        color: #333;
+    }
+    .preview-section .preview-info {
+        font-size: 9px;
+        color: #666;
+        padding: 2px 6px;
+        margin-bottom: 3px;
+        background: #fafafa;
+        border-radius: 3px;
+        line-height: 1.4;
+    }
+    .preview-section .preview-info strong {
+        color: #333;
+    }
+    .preview-section .preview-pdf-container {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        border: 1px solid #eee;
+        border-radius: 3px;
+        background: #fafafa;
+    }
+    .preview-section .preview-pdf-container iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+    .preview-section .preview-pdf-container .pdf-loading {
         display: flex;
         align-items: center;
         justify-content: center;
         height: 100%;
-        color: #ccc;
+        color: #999;
         font-size: 11px;
+        font-style: italic;
+    }
+    .preview-section .preview-pdf-container .pdf-loading i {
+        margin-right: 6px;
+    }
+    
+    /* Botón Previsualizar en tarjeta del medio */
+    .btn-preview {
+        width: 100%;
+        padding: 4px 8px;
+        font-size: 10px;
+        font-weight: 700;
+        border: 1px solid #FC523B;
+        background: #FC523B;
+        color: #fff;
+        border-radius: 3px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        margin-top: 4px;
+        transition: background 0.15s;
+    }
+    .btn-preview:hover {
+        background: #e0442a;
+    }
+    .btn-preview:disabled {
+        background: #ccc;
+        border-color: #ccc;
+        cursor: not-allowed;
+    }
+    .btn-preview i {
+        font-size: 10px;
+    }
+    
+    /* ===== BOTÓN QUITAR PRODUCTO ===== */
+    .btn-remove-product {
+        width: 100%;
+        padding: 4px 8px;
+        font-size: 10px;
+        font-weight: 700;
+        border: 1px solid #dc3545;
+        background: #dc3545;
+        color: #fff;
+        border-radius: 3px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        margin-top: 4px;
+        transition: background 0.15s;
+    }
+    .btn-remove-product:hover {
+        background: #c82333;
+    }
+    .btn-remove-product:disabled {
+        background: #ccc;
+        border-color: #ccc;
+        cursor: not-allowed;
+    }
+    .btn-remove-product i {
+        font-size: 10px;
+    }
+    
+    /* Fila seleccionada en detalle-grid */
+    .detalle-grid tbody tr.dg-selected {
+        background: #ffe6e6 !important;
+        outline: 2px solid #dc3545;
+        outline-offset: -2px;
     }
     
     @media (max-width: 1024px) {
@@ -439,6 +784,7 @@
                     {% endfor %}
                 </tbody>
             </table>
+            
         </div>
     </div>
     
@@ -458,7 +804,13 @@
             <!-- Campos del comprobante -->
             <div class="comprobante-field" id="dniField">
                 <label for="txtDni">INGRESAR DNI:</label>
-                <input type="text" id="txtDni" maxlength="8" inputmode="numeric" pattern="[0-9]*" onkeypress="return event.charCode >= 48 && event.charCode <= 57" placeholder="12345678">
+                <div class="input-btn-group autocomplete-wrapper">
+                    <input type="text" id="txtDni" maxlength="8" inputmode="numeric" pattern="[0-9]*" onkeypress="return event.charCode >= 48 && event.charCode <= 57" placeholder="12345678" autocomplete="off" oninput="window.__onDniInput(this)">
+                    <button class="btn-buscar-apiperu" id="btnAbrirModalBuscar" onclick="window.__abrirModalBuscar()" title="Buscar en APIPERU">
+                        <i class="fas fa-globe"></i> Buscar RUC/DNI
+                    </button>
+                    <div class="autocomplete-suggestions" id="suggestions"></div>
+                </div>
             </div>
             <div class="comprobante-field">
                 <label for="txtNombre">NOMBRE:</label>
@@ -469,6 +821,42 @@
                 <textarea id="txtDireccion" placeholder="Dirección del cliente"></textarea>
             </div>
             
+            <!-- MODAL BUSCAR EN APIPERU -->
+            <div class="apiperu-modal-overlay" id="apiperuModal" onclick="window.__cerrarModalBuscar(event)">
+                <div class="apiperu-modal" onclick="event.stopPropagation()">
+                    <div class="apiperu-modal-header">
+                        <span>Buscar en APIPERU</span>
+                        <button class="apiperu-modal-close" onclick="window.__cerrarModalBuscar(true)">&times;</button>
+                    </div>
+                    <div class="apiperu-modal-body">
+                        <div class="apiperu-modal-field">
+                            <label id="lblModalDoc">INGRESAR DNI:</label>
+                            <input type="text" id="txtModalDoc" maxlength="8" inputmode="numeric" pattern="[0-9]*" onkeypress="return event.charCode >= 48 && event.charCode <= 57" placeholder="12345678">
+                        </div>
+                        <div class="apiperu-modal-actions">
+                            <button class="apiperu-modal-btn" id="btnModalBuscar" onclick="window.__buscarEnApiperu()">
+                                <i class="fas fa-search"></i> Buscar
+                            </button>
+                            <button class="apiperu-modal-btn apiperu-modal-btn-cancel" onclick="window.__cerrarModalBuscar(true)">
+                                Cancelar
+                            </button>
+                        </div>
+                        <div class="apiperu-modal-result" id="apiperuResult" style="display:none;">
+                            <div class="apiperu-modal-field">
+                                <label>NOMBRE:</label>
+                                <input type="text" id="txtModalNombre" readonly>
+                            </div>
+                            <div class="apiperu-modal-field">
+                                <label>DIRECCIÓN:</label>
+                                <input type="text" id="txtModalDireccion" readonly>
+                            </div>
+                            <button class="apiperu-modal-btn" onclick="window.__usarResultadoApiperu()">
+                                <i class="fas fa-check"></i> Usar estos datos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <!-- Grid de detalle de productos -->
             <table class="detalle-grid" id="detalleGrid">
                 <thead>
@@ -488,17 +876,37 @@
                     </tr>
                 </tbody>
             </table>
+            
+            <!-- Botón Quitar producto seleccionado -->
+            <button class="btn-remove-product" id="btnRemoveProduct" onclick="window.__removeSelectedProduct()" disabled>
+                <i class="fas fa-trash-alt"></i> Quitar producto
+            </button>
+            
+            <!-- Botón Previsualizar -->
+            <button class="btn-preview" id="btnPreview" onclick="window.__generarPreview()" disabled>
+                <i class="fas fa-eye"></i> Previsualizar
+            </button>
         </div>
     </div>
     
-    <!-- TARJETA 3: Acciones -->
+    <!-- TARJETA 3: Previsualización PDF -->
     <div class="card">
         <div class="card-header">
-            <i class="fas fa-cog"></i>
-            Acciones
+            <i class="fas fa-file-pdf" style="color:#FC523B;"></i>
+            Previsualización
         </div>
-        <div class="placeholder-center">
-            <i class="fas fa-tools" style="margin-right:6px;"></i> Próximamente
+        <div class="card-body" style="padding:4px;display:flex;flex-direction:column;overflow:hidden;">
+            <!-- Sección de previsualización PDF (visible al generar) -->
+            <div class="preview-section active" id="previewSection" style="display:flex;">
+                <div class="preview-info" id="previewInfo" style="display:none;"></div>
+                <div class="preview-pdf-container" id="previewPdfContainer">
+                    <div class="pdf-loading" id="pdfLoading">
+                        <i class="fas fa-file-pdf" style="margin-right:6px;color:#FC523B;"></i>
+                        Genere una previsualización desde la tarjeta Comprobante
+                    </div>
+                    <iframe id="pdfIframe" style="display:none;"></iframe>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -642,6 +1050,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const dniField = document.getElementById('dniField');
         const lblDni = dniField ? dniField.querySelector('label') : null;
         const txtDni = document.getElementById('txtDni');
+        const btnAbrirModal = document.getElementById('btnAbrirModalBuscar');
         
         if (tipo === 'boleta') {
             btnBoleta.classList.add('active');
@@ -651,6 +1060,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 txtDni.maxLength = 8;
                 txtDni.placeholder = '12345678';
             }
+            if (btnAbrirModal) btnAbrirModal.innerHTML = '<i class="fas fa-globe"></i> Buscar DNI';
             if (dniField) dniField.style.display = 'block';
         } else {
             btnFactura.classList.add('active');
@@ -660,8 +1070,171 @@ document.addEventListener('DOMContentLoaded', function() {
                 txtDni.maxLength = 11;
                 txtDni.placeholder = '12345678901';
             }
+            if (btnAbrirModal) btnAbrirModal.innerHTML = '<i class="fas fa-globe"></i> Buscar RUC';
             if (dniField) dniField.style.display = 'block';
         }
+    };
+    
+    // === AUTOCOMPLETE LOCAL desde tabla Cliente ===
+    var __autocompleteTimer = null;
+    
+    window.__onDniInput = function(input) {
+        if (__autocompleteTimer) clearTimeout(__autocompleteTimer);
+        var val = input.value.trim();
+        var sug = document.getElementById('suggestions');
+        if (val.length < 2) {
+            sug.classList.remove('active');
+            sug.innerHTML = '';
+            return;
+        }
+        __autocompleteTimer = setTimeout(function() {
+            fetch('/api/buscar-cliente/' + encodeURIComponent(val) + '/')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    sug.innerHTML = '';
+                    if (data.clientes && data.clientes.length > 0) {
+                        data.clientes.forEach(function(cli) {
+                            var div = document.createElement('div');
+                            div.className = 'sug-item';
+                            div.innerHTML = '<span class="sug-doc">' + cli.nro_documento + '</span>' +
+                                '<span class="sug-name">' + (cli.nombre || '') + '</span>';
+                            div.onclick = function() {
+                                window.__seleccionarCliente(cli);
+                            };
+                            sug.appendChild(div);
+                        });
+                        sug.classList.add('active');
+                    } else {
+                        sug.innerHTML = '<div class="sug-noresult">Sin resultados locales</div>';
+                        sug.classList.add('active');
+                    }
+                })
+                .catch(function() {
+                    sug.classList.remove('active');
+                });
+        }, 200);
+    };
+    
+    window.__seleccionarCliente = function(cliente) {
+        var txtDni = document.getElementById('txtDni');
+        var txtNombre = document.getElementById('txtNombre');
+        var txtDireccion = document.getElementById('txtDireccion');
+        var sug = document.getElementById('suggestions');
+        if (txtDni) txtDni.value = cliente.nro_documento;
+        if (txtNombre) txtNombre.value = cliente.nombre || '';
+        if (txtDireccion) txtDireccion.value = cliente.domicilio || '';
+        sug.classList.remove('active');
+        sug.innerHTML = '';
+    };
+    
+    // Cerrar sugerencias al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        var sug = document.getElementById('suggestions');
+        if (sug && !e.target.closest('.autocomplete-wrapper')) {
+            sug.classList.remove('active');
+        }
+    });
+    
+    // === MODAL APIPERU: abrir ===
+    window.__abrirModalBuscar = function() {
+        const tipo = document.getElementById('btnBoleta').classList.contains('active') ? 'boleta' : 'factura';
+        const txtDni = document.getElementById('txtDni');
+        const txtModalDoc = document.getElementById('txtModalDoc');
+        const lblModalDoc = document.getElementById('lblModalDoc');
+        const apiperuResult = document.getElementById('apiperuResult');
+        
+        // Configurar modal según tipo
+        if (tipo === 'boleta') {
+            lblModalDoc.textContent = 'INGRESAR DNI:';
+            txtModalDoc.maxLength = 8;
+            txtModalDoc.placeholder = '12345678';
+        } else {
+            lblModalDoc.textContent = 'INGRESAR RUC:';
+            txtModalDoc.maxLength = 11;
+            txtModalDoc.placeholder = '12345678901';
+        }
+        
+        // Copiar el número actual del campo principal al modal
+        txtModalDoc.value = txtDni ? txtDni.value : '';
+        
+        // Ocultar resultado anterior
+        apiperuResult.style.display = 'none';
+        document.getElementById('txtModalNombre').value = '';
+        document.getElementById('txtModalDireccion').value = '';
+        
+        // Mostrar modal
+        document.getElementById('apiperuModal').classList.add('active');
+        
+        // Enfocar input
+        setTimeout(function() { txtModalDoc.focus(); }, 100);
+    };
+    
+    // === MODAL APIPERU: cerrar ===
+    window.__cerrarModalBuscar = function(arg) {
+        // arg === true: llamado desde botón Cerrar o Cancelar
+        // arg es un evento: llamado desde el overlay (click fuera del modal)
+        if (arg === true) {
+            document.getElementById('apiperuModal').classList.remove('active');
+        } else if (arg && arg.target === arg.currentTarget) {
+            document.getElementById('apiperuModal').classList.remove('active');
+        }
+    };
+    
+    // === MODAL APIPERU: buscar ===
+    window.__buscarEnApiperu = function() {
+        const txtModalDoc = document.getElementById('txtModalDoc');
+        const btnModalBuscar = document.getElementById('btnModalBuscar');
+        const apiperuResult = document.getElementById('apiperuResult');
+        const numero = txtModalDoc.value.trim();
+        
+        if (numero.length !== 8 && numero.length !== 11) {
+            alert('Ingrese un DNI (8 dígitos) o RUC (11 dígitos) válido');
+            txtModalDoc.focus();
+            return;
+        }
+        
+        // Deshabilitar botón mientras se consulta
+        btnModalBuscar.disabled = true;
+        btnModalBuscar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
+        apiperuResult.style.display = 'none';
+        
+        fetch('/api/consultar-documento/' + numero + '/')
+            .then(function(response) {
+                if (!response.ok) return response.json().then(function(e) { throw new Error(e.error || 'Error ' + response.status); });
+                return response.json();
+            })
+            .then(function(data) {
+                if (data.success) {
+                    document.getElementById('txtModalNombre').value = data.nombre || '';
+                    document.getElementById('txtModalDireccion').value = data.direccion || '';
+                    apiperuResult.style.display = 'block';
+                } else {
+                    alert('No se encontraron datos para ' + numero);
+                }
+            })
+            .catch(function(err) {
+                alert('Error al consultar: ' + err.message);
+            })
+            .finally(function() {
+                btnModalBuscar.disabled = false;
+                btnModalBuscar.innerHTML = '<i class="fas fa-search"></i> Buscar';
+            });
+    };
+    
+    // === MODAL APIPERU: usar resultado y cerrar ===
+    window.__usarResultadoApiperu = function() {
+        const txtDni = document.getElementById('txtDni');
+        const txtNombre = document.getElementById('txtNombre');
+        const txtDireccion = document.getElementById('txtDireccion');
+        const txtModalNombre = document.getElementById('txtModalNombre');
+        const txtModalDireccion = document.getElementById('txtModalDireccion');
+        
+        if (txtDni) txtDni.value = document.getElementById('txtModalDoc').value;
+        if (txtNombre) txtNombre.value = txtModalNombre.value;
+        if (txtDireccion) txtDireccion.value = txtModalDireccion.value;
+        
+        // Cerrar modal
+        document.getElementById('apiperuModal').classList.remove('active');
     };
     
     // === COMPROBANTE: seleccionar ticket y cargar detalle ===
@@ -699,7 +1272,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const pu = Number(det.precio_unitario).toFixed(2);
                     const tot = Number(det.total).toFixed(2);
                     totalGeneral += Number(det.total);
-                    html += '<tr>' +
+                    html += '<tr onclick="window.__selectProductRow(this)" style="cursor:pointer;">' +
                         '<td>' + det.producto + '</td>' +
                         '<td class="dg-cant">' + cant + '</td>' +
                         '<td class="dg-precio">S/ ' + pu + '</td>' +
@@ -707,21 +1280,236 @@ document.addEventListener('DOMContentLoaded', function() {
                         '</tr>';
                 });
                 
-                // Total row
-                html += '<tr class="dg-total-row">' +
+                // IGV breakdown (10.5%)
+                const igvRate = 0.105;
+                const total = totalGeneral;
+                const subtotal = total / (1 + igvRate);
+                const igv = total - subtotal;
+                
+                html += '<tr class="dg-subtotal-row">' +
+                    '<td colspan="3" class="dg-total-label">Subtotal</td>' +
+                    '<td class="dg-total-val">S/ ' + subtotal.toFixed(2) + '</td>' +
+                    '</tr>' +
+                    '<tr class="dg-igv-row">' +
+                    '<td colspan="3" class="dg-total-label">IGV (10.5%)</td>' +
+                    '<td class="dg-total-val">S/ ' + igv.toFixed(2) + '</td>' +
+                    '</tr>' +
+                    '<tr class="dg-total-row">' +
                     '<td colspan="3" class="dg-total-label">TOTAL</td>' +
-                    '<td class="dg-total-val">S/ ' + totalGeneral.toFixed(2) + '</td>' +
+                    '<td class="dg-total-val">S/ ' + total.toFixed(2) + '</td>' +
                     '</tr>';
                 
                 tbody.innerHTML = html;
+                // Resetear selección y deshabilitar botón quitar al cargar nuevo detalle
+                document.getElementById('btnRemoveProduct').disabled = true;
             })
             .catch(function(err) {
                 tbody.innerHTML = '<tr class="dg-empty"><td colspan="4"><i class="fas fa-exclamation-triangle" style="margin-right:4px;color:#FC523B;"></i> Error al cargar: ' + err.message + '</td></tr>';
             });
     };
     
+    // === DETALLE: seleccionar fila de producto (click) ===
+    window.__selectProductRow = function(row) {
+        // Quitar selección de cualquier otra fila
+        document.querySelectorAll('#detalleBody tr').forEach(function(r) {
+            r.classList.remove('dg-selected');
+        });
+        row.classList.add('dg-selected');
+        // Habilitar botón quitar
+        document.getElementById('btnRemoveProduct').disabled = false;
+    };
+    
+    // === DETALLE: quitar producto seleccionado y recalcular ===
+    window.__removeSelectedProduct = function() {
+        const tbody = document.getElementById('detalleBody');
+        const selected = tbody.querySelector('tr.dg-selected');
+        
+        if (!selected) {
+            alert('Seleccione un producto de la lista para quitar');
+            return;
+        }
+        
+        // Eliminar la fila seleccionada
+        selected.remove();
+        
+        // Deshabilitar botón quitar
+        document.getElementById('btnRemoveProduct').disabled = true;
+        
+        // Recalcular totales desde las filas restantes (excluyendo filas de total/subtotal/igv)
+        const productRows = tbody.querySelectorAll('tr:not(.dg-subtotal-row):not(.dg-igv-row):not(.dg-total-row):not(.dg-empty)');
+        
+        if (productRows.length === 0) {
+            // No quedan productos, mostrar mensaje vacío
+            tbody.innerHTML = '<tr class="dg-empty"><td colspan="4"><i class="fas fa-hand-pointer" style="margin-right:4px;"></i> Seleccione un ticket</td></tr>';
+            return;
+        }
+        
+        // Recalcular total
+        let totalGeneral = 0;
+        productRows.forEach(function(row) {
+            const totalCell = row.querySelector('.dg-total');
+            if (totalCell) {
+                const val = parseFloat(totalCell.textContent.replace('S/ ', '').replace(',', ''));
+                if (!isNaN(val)) totalGeneral += val;
+            }
+        });
+        
+        // Quitar filas de subtotal, igv y total si existen
+        tbody.querySelectorAll('.dg-subtotal-row, .dg-igv-row, .dg-total-row').forEach(function(r) {
+            r.remove();
+        });
+        
+        // IGV breakdown (10.5%)
+        const igvRate = 0.105;
+        const total = totalGeneral;
+        const subtotal = total / (1 + igvRate);
+        const igv = total - subtotal;
+        
+        // Agregar filas de totales al final
+        var html = '';
+        html += '<tr class="dg-subtotal-row">' +
+            '<td colspan="3" class="dg-total-label">Subtotal</td>' +
+            '<td class="dg-total-val">S/ ' + subtotal.toFixed(2) + '</td>' +
+            '</tr>' +
+            '<tr class="dg-igv-row">' +
+            '<td colspan="3" class="dg-total-label">IGV (10.5%)</td>' +
+            '<td class="dg-total-val">S/ ' + igv.toFixed(2) + '</td>' +
+            '</tr>' +
+            '<tr class="dg-total-row">' +
+            '<td colspan="3" class="dg-total-label">TOTAL</td>' +
+            '<td class="dg-total-val">S/ ' + total.toFixed(2) + '</td>' +
+            '</tr>';
+        
+        tbody.insertAdjacentHTML('beforeend', html);
+    };
+    
+    // === PREVISUALIZACIÓN: variable global para ticket seleccionado ===
+    var __currentTicketId = null;
+    
+    // === PREVISUALIZACIÓN: generar PDF con Nubefact ===
+    window.__generarPreview = function() {
+        const btnPreview = document.getElementById('btnPreview');
+        const ticketId = __currentTicketId;
+        
+        if (!ticketId) {
+            alert('Seleccione un ticket primero');
+            return;
+        }
+        
+        const tipo = document.getElementById('btnBoleta').classList.contains('active') ? 'boleta' : 'factura';
+        const documento = document.getElementById('txtDni').value.trim();
+        const nombre = document.getElementById('txtNombre').value.trim();
+        const direccion = document.getElementById('txtDireccion').value.trim();
+        
+        if (!documento) {
+            alert('Ingrese el número de documento del cliente');
+            return;
+        }
+        if (!nombre) {
+            alert('Ingrese el nombre del cliente');
+            return;
+        }
+        
+        // Deshabilitar botón
+        btnPreview.disabled = true;
+        btnPreview.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+        
+        // Mostrar preview en tarjeta 3 (derecha)
+        const previewSection = document.getElementById('previewSection');
+        const pdfLoading = document.getElementById('pdfLoading');
+        const pdfIframe = document.getElementById('pdfIframe');
+        const previewInfo = document.getElementById('previewInfo');
+        
+        previewSection.style.display = 'flex';
+        pdfLoading.style.display = 'flex';
+        pdfLoading.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando a Nubefact...';
+        pdfIframe.style.display = 'none';
+        previewInfo.style.display = 'none';
+        
+        fetch('/api/previsualizar-comprobante/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify({
+                ticket_id: ticketId,
+                tipo: tipo,
+                documento: documento,
+                nombre: nombre,
+                direccion: direccion
+            })
+        })
+        .then(function(response) {
+            return response.json().then(function(data) {
+                if (!response.ok) throw new Error(data.error || 'Error ' + response.status);
+                return data;
+            });
+        })
+        .then(function(data) {
+            if (data.success) {
+                // Mostrar info del comprobante
+                var tipoLabel = data.tipo === 2 ? 'BOLETA' : 'FACTURA';
+                previewInfo.style.display = 'block';
+                previewInfo.innerHTML = '<strong>' + tipoLabel + '</strong>: ' +
+                    data.serie + '-' + data.numero + ' | ' +
+                    '<a href="' + data.url + '" target="_blank" style="color:#FC523B;">Ver en Nubefact</a>';
+                
+                // Mostrar PDF embebido
+                if (data.pdf_zip_base64) {
+                    // El PDF viene en base64 (zip), lo decodificamos y mostramos
+                    var pdfBytes = atob(data.pdf_zip_base64);
+                    var pdfArray = new Uint8Array(pdfBytes.length);
+                    for (var i = 0; i < pdfBytes.length; i++) {
+                        pdfArray[i] = pdfBytes.charCodeAt(i);
+                    }
+                    var blob = new Blob([pdfArray], { type: 'application/pdf' });
+                    var url = URL.createObjectURL(blob);
+                    pdfIframe.src = url;
+                    pdfIframe.style.display = 'block';
+                    pdfLoading.style.display = 'none';
+                } else if (data.enlace_del_pdf) {
+                    // Cargar PDF a través del proxy del backend para evitar CORS/mixed content
+                    var proxyUrl = '/api/proxy-pdf/?url=' + encodeURIComponent(data.enlace_del_pdf);
+                    pdfIframe.src = proxyUrl;
+                    pdfIframe.style.display = 'block';
+                    pdfLoading.style.display = 'none';
+                } else {
+                    pdfLoading.innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i> PDF generado. <a href="' + data.url + '" target="_blank" style="color:#FC523B;">Abrir en Nubefact</a>';
+                }
+            } else {
+                previewInfo.style.display = 'block';
+                var detalleHtml = '';
+                if (data.detalle) {
+                    if (typeof data.detalle === 'object') {
+                        detalleHtml = '<pre style="margin-top:6px;font-size:12px;background:#fff5f5;padding:8px;border-radius:4px;white-space:pre-wrap;word-break:break-word;max-height:200px;overflow-y:auto;">' + JSON.stringify(data.detalle, null, 2) + '</pre>';
+                    } else {
+                        detalleHtml = '<div style="margin-top:6px;font-size:12px;background:#fff5f5;padding:8px;border-radius:4px;word-break:break-word;">' + data.detalle + '</div>';
+                    }
+                }
+                previewInfo.innerHTML = '<span style="color:#FC523B;"><i class="fas fa-exclamation-triangle"></i> Error: ' + (data.error || 'Error desconocido') + '</span>' + detalleHtml;
+                pdfLoading.style.display = 'none';
+            }
+        })
+        .catch(function(err) {
+            previewInfo.style.display = 'block';
+            previewInfo.innerHTML = '<span style="color:#FC523B;"><i class="fas fa-exclamation-triangle"></i> Error: ' + err.message + '</span>';
+            pdfLoading.style.display = 'none';
+        })
+        .finally(function() {
+            btnPreview.disabled = false;
+            btnPreview.innerHTML = '<i class="fas fa-eye"></i> Previsualizar';
+        });
+    };
+    
+    // === ACTUALIZAR: habilitar/deshabilitar botón preview al seleccionar ticket ===
+    // (modificamos __selectTicket para que también habilite el botón)
+    var __originalSelectTicket = window.__selectTicket;
+    window.__selectTicket = function(row, ticketId) {
+        __originalSelectTicket(row, ticketId);
+        __currentTicketId = ticketId;
+        document.getElementById('btnPreview').disabled = false;
+    };
+    
     // Init
     updateDateLabel();
-})();
+});
 </script>
 {% endblock %}
