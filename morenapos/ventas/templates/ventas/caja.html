@@ -230,6 +230,11 @@
         outline: 2px solid #FFC801;
         outline-offset: -2px;
     }
+    .tickets-table tbody tr.multi-selected {
+        background: #FFE0B2;
+        outline: 2px solid #FF9800;
+        outline-offset: -2px;
+    }
     .tickets-table .badge-duplicado {
         display: inline-block;
         background: #ffd700;
@@ -1237,22 +1242,86 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('apiperuModal').classList.remove('active');
     };
     
-    // === COMPROBANTE: seleccionar ticket y cargar detalle ===
+    // === COMPROBANTE: seleccionar ticket (multi-selección, toggle) ===
     window.__selectTicket = function(row, ticketId) {
-        // Highlight selected row
-        document.querySelectorAll('.tickets-table tbody tr').forEach(function(r) {
-            r.classList.remove('selected');
-        });
-        row.classList.add('selected');
+        // Toggle: si ya está seleccionado, lo deseleccionamos
+        if (row.classList.contains('multi-selected')) {
+            row.classList.remove('multi-selected');
+            // Si no quedan tickets seleccionados, limpiar grilla
+            const anySelected = document.querySelectorAll('.tickets-table tbody tr.multi-selected');
+            if (anySelected.length === 0) {
+                document.getElementById('detalleBody').innerHTML = '<tr class="dg-empty"><td colspan="4"><i class="fas fa-hand-pointer" style="margin-right:4px;"></i> Seleccione un ticket</td></tr>';
+                document.getElementById('btnPreview').disabled = true;
+                document.getElementById('btnRemoveProduct').disabled = true;
+                __currentTicketId = null;
+            } else {
+                // Recargar todos los tickets seleccionados
+                __reloadAllSelected();
+            }
+            return;
+        }
         
-        // Load details via API
-        __loadDetalle(ticketId);
+        // Marcar con naranja
+        row.classList.add('multi-selected');
+        
+        // Cargar y agregar productos del ticket a la grilla del medio
+        __appendDetalle(ticketId);
     };
     
-    // === COMPROBANTE: cargar detalle desde API ===
-    window.__loadDetalle = function(ticketId) {
+    // === COMPROBANTE: recargar todos los tickets seleccionados ===
+    window.__reloadAllSelected = function() {
         const tbody = document.getElementById('detalleBody');
         tbody.innerHTML = '<tr class="dg-empty"><td colspan="4"><i class="fas fa-spinner fa-spin" style="margin-right:4px;"></i> Cargando...</td></tr>';
+        document.getElementById('btnRemoveProduct').disabled = true;
+        
+        const selectedRows = document.querySelectorAll('.tickets-table tbody tr.multi-selected');
+        let ids = [];
+        selectedRows.forEach(function(r) {
+            ids.push(r.getAttribute('data-ticket-id'));
+        });
+        
+        if (ids.length === 0) {
+            tbody.innerHTML = '<tr class="dg-empty"><td colspan="4"><i class="fas fa-hand-pointer" style="margin-right:4px;"></i> Seleccione un ticket</td></tr>';
+            return;
+        }
+        
+        // Cargar todos en paralelo
+        let allProducts = [];
+        let completed = 0;
+        
+        ids.forEach(function(id) {
+            fetch('/api/ticket-detalle/' + id + '/')
+                .then(function(response) {
+                    if (!response.ok) throw new Error('Error ' + response.status);
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (data.detalles && data.detalles.length > 0) {
+                        allProducts = allProducts.concat(data.detalles);
+                    }
+                    completed++;
+                    if (completed === ids.length) {
+                        __renderProductos(allProducts);
+                    }
+                })
+                .catch(function(err) {
+                    completed++;
+                    if (completed === ids.length) {
+                        __renderProductos(allProducts);
+                    }
+                });
+        });
+    };
+    
+    // === COMPROBANTE: agregar productos de un ticket a la grilla (append) ===
+    window.__appendDetalle = function(ticketId) {
+        const tbody = document.getElementById('detalleBody');
+        
+        // Si está vacío, mostrar loading
+        const isEmpty = tbody.querySelector('.dg-empty') !== null;
+        if (isEmpty) {
+            tbody.innerHTML = '<tr class="dg-empty"><td colspan="4"><i class="fas fa-spinner fa-spin" style="margin-right:4px;"></i> Cargando...</td></tr>';
+        }
         
         fetch('/api/ticket-detalle/' + ticketId + '/')
             .then(function(response) {
@@ -1261,51 +1330,136 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(function(data) {
                 if (!data.detalles || data.detalles.length === 0) {
-                    tbody.innerHTML = '<tr class="dg-empty"><td colspan="4">Sin productos</td></tr>';
+                    // Si estaba vacío, restaurar mensaje
+                    if (isEmpty) {
+                        tbody.innerHTML = '<tr class="dg-empty"><td colspan="4">Sin productos</td></tr>';
+                    }
                     return;
                 }
                 
-                let html = '';
-                let totalGeneral = 0;
-                data.detalles.forEach(function(det) {
-                    const cant = Number(det.cantidad).toFixed(2);
-                    const pu = Number(det.precio_unitario).toFixed(2);
-                    const tot = Number(det.total).toFixed(2);
-                    totalGeneral += Number(det.total);
-                    html += '<tr onclick="window.__selectProductRow(this)" style="cursor:pointer;">' +
-                        '<td>' + det.producto + '</td>' +
-                        '<td class="dg-cant">' + cant + '</td>' +
-                        '<td class="dg-precio">S/ ' + pu + '</td>' +
-                        '<td class="dg-total">S/ ' + tot + '</td>' +
-                        '</tr>';
+                // Obtener productos existentes (sin contar filas de totales)
+                let existingProducts = [];
+                const productRows = tbody.querySelectorAll('tr:not(.dg-subtotal-row):not(.dg-igv-row):not(.dg-total-row):not(.dg-empty)');
+                productRows.forEach(function(pr) {
+                    const cells = pr.querySelectorAll('td');
+                    if (cells.length >= 4) {
+                        existingProducts.push({
+                            producto: cells[0].textContent,
+                            cantidad: parseFloat(cells[1].textContent) || 0,
+                            precio_unitario: parseFloat(cells[2].textContent.replace('S/ ', '')) || 0,
+                            total: parseFloat(cells[3].textContent.replace('S/ ', '')) || 0
+                        });
+                    }
                 });
                 
-                // IGV breakdown (10.5%)
-                const igvRate = 0.105;
-                const total = totalGeneral;
-                const subtotal = total / (1 + igvRate);
-                const igv = total - subtotal;
+                // Agregar nuevos productos
+                data.detalles.forEach(function(det) {
+                    existingProducts.push({
+                        producto: det.producto,
+                        cantidad: Number(det.cantidad),
+                        precio_unitario: Number(det.precio_unitario),
+                        total: Number(det.total)
+                    });
+                });
                 
-                html += '<tr class="dg-subtotal-row">' +
-                    '<td colspan="3" class="dg-total-label">Subtotal</td>' +
-                    '<td class="dg-total-val">S/ ' + subtotal.toFixed(2) + '</td>' +
-                    '</tr>' +
-                    '<tr class="dg-igv-row">' +
-                    '<td colspan="3" class="dg-total-label">IGV (10.5%)</td>' +
-                    '<td class="dg-total-val">S/ ' + igv.toFixed(2) + '</td>' +
-                    '</tr>' +
-                    '<tr class="dg-total-row">' +
-                    '<td colspan="3" class="dg-total-label">TOTAL</td>' +
-                    '<td class="dg-total-val">S/ ' + total.toFixed(2) + '</td>' +
-                    '</tr>';
+                __renderProductos(existingProducts);
                 
-                tbody.innerHTML = html;
-                // Resetear selección y deshabilitar botón quitar al cargar nuevo detalle
-                document.getElementById('btnRemoveProduct').disabled = true;
+                // Habilitar preview si hay al menos un ticket seleccionado
+                const anySelected = document.querySelectorAll('.tickets-table tbody tr.multi-selected');
+                if (anySelected.length > 0) {
+                    document.getElementById('btnPreview').disabled = false;
+                    // Usar el último ticket seleccionado para currentTicketId
+                    const lastRow = anySelected[anySelected.length - 1];
+                    __currentTicketId = lastRow.getAttribute('data-ticket-id');
+                }
             })
             .catch(function(err) {
-                tbody.innerHTML = '<tr class="dg-empty"><td colspan="4"><i class="fas fa-exclamation-triangle" style="margin-right:4px;color:#FC523B;"></i> Error al cargar: ' + err.message + '</td></tr>';
+                if (isEmpty) {
+                    tbody.innerHTML = '<tr class="dg-empty"><td colspan="4"><i class="fas fa-exclamation-triangle" style="margin-right:4px;color:#FC523B;"></i> Error al cargar: ' + err.message + '</td></tr>';
+                }
             });
+    };
+    
+    // === COMPROBANTE: renderizar productos y recalcular totales ===
+    window.__renderProductos = function(productos) {
+        const tbody = document.getElementById('detalleBody');
+        
+        if (!productos || productos.length === 0) {
+            tbody.innerHTML = '<tr class="dg-empty"><td colspan="4"><i class="fas fa-hand-pointer" style="margin-right:4px;"></i> Seleccione un ticket</td></tr>';
+            document.getElementById('btnRemoveProduct').disabled = true;
+            return;
+        }
+        
+        let html = '';
+        let totalGeneral = 0;
+        productos.forEach(function(det) {
+            const cant = Number(det.cantidad).toFixed(2);
+            const pu = Number(det.precio_unitario).toFixed(2);
+            const tot = Number(det.total).toFixed(2);
+            totalGeneral += Number(det.total);
+            html += '<tr onclick="window.__selectProductRow(this)" style="cursor:pointer;">' +
+                '<td>' + det.producto + '</td>' +
+                '<td class="dg-cant">' + cant + '</td>' +
+                '<td class="dg-precio">S/ ' + pu + '</td>' +
+                '<td class="dg-total">S/ ' + tot + '</td>' +
+                '</tr>';
+        });
+        
+        html += __buildTotalsHtml(totalGeneral);
+        
+        tbody.innerHTML = html;
+        document.getElementById('btnRemoveProduct').disabled = true;
+    };
+    
+    // === COMPROBANTE: construir HTML de subtotal/IGV/total ===
+    window.__buildTotalsHtml = function(totalGeneral) {
+        const igvRate = 0.105;
+        const total = totalGeneral;
+        const subtotal = total / (1 + igvRate);
+        const igv = total - subtotal;
+        
+        return '<tr class="dg-subtotal-row">' +
+            '<td colspan="3" class="dg-total-label">Subtotal</td>' +
+            '<td class="dg-total-val">S/ ' + subtotal.toFixed(2) + '</td>' +
+            '</tr>' +
+            '<tr class="dg-igv-row">' +
+            '<td colspan="3" class="dg-total-label">IGV (10.5%)</td>' +
+            '<td class="dg-total-val">S/ ' + igv.toFixed(2) + '</td>' +
+            '</tr>' +
+            '<tr class="dg-total-row">' +
+            '<td colspan="3" class="dg-total-label">TOTAL</td>' +
+            '<td class="dg-total-val">S/ ' + total.toFixed(2) + '</td>' +
+            '</tr>';
+    };
+    
+    // === COMPROBANTE: recalcular totales desde las filas actuales ===
+    window.__recalculateTotals = function() {
+        const tbody = document.getElementById('detalleBody');
+        
+        // Obtener solo filas de producto (excluir totales y empty)
+        const productRows = tbody.querySelectorAll('tr:not(.dg-subtotal-row):not(.dg-igv-row):not(.dg-total-row):not(.dg-empty)');
+        
+        if (productRows.length === 0) {
+            tbody.innerHTML = '<tr class="dg-empty"><td colspan="4"><i class="fas fa-hand-pointer" style="margin-right:4px;"></i> Seleccione un ticket</td></tr>';
+            return;
+        }
+        
+        let totalGeneral = 0;
+        productRows.forEach(function(row) {
+            const totalCell = row.querySelector('.dg-total');
+            if (totalCell) {
+                const val = parseFloat(totalCell.textContent.replace('S/ ', '').replace(',', ''));
+                if (!isNaN(val)) totalGeneral += val;
+            }
+        });
+        
+        // Quitar filas de totales existentes
+        tbody.querySelectorAll('.dg-subtotal-row, .dg-igv-row, .dg-total-row').forEach(function(r) {
+            r.remove();
+        });
+        
+        // Agregar nuevos totales
+        tbody.insertAdjacentHTML('beforeend', __buildTotalsHtml(totalGeneral));
     };
     
     // === DETALLE: seleccionar fila de producto (click) ===
@@ -1335,52 +1489,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Deshabilitar botón quitar
         document.getElementById('btnRemoveProduct').disabled = true;
         
-        // Recalcular totales desde las filas restantes (excluyendo filas de total/subtotal/igv)
-        const productRows = tbody.querySelectorAll('tr:not(.dg-subtotal-row):not(.dg-igv-row):not(.dg-total-row):not(.dg-empty)');
-        
-        if (productRows.length === 0) {
-            // No quedan productos, mostrar mensaje vacío
-            tbody.innerHTML = '<tr class="dg-empty"><td colspan="4"><i class="fas fa-hand-pointer" style="margin-right:4px;"></i> Seleccione un ticket</td></tr>';
-            return;
-        }
-        
-        // Recalcular total
-        let totalGeneral = 0;
-        productRows.forEach(function(row) {
-            const totalCell = row.querySelector('.dg-total');
-            if (totalCell) {
-                const val = parseFloat(totalCell.textContent.replace('S/ ', '').replace(',', ''));
-                if (!isNaN(val)) totalGeneral += val;
-            }
-        });
-        
-        // Quitar filas de subtotal, igv y total si existen
-        tbody.querySelectorAll('.dg-subtotal-row, .dg-igv-row, .dg-total-row').forEach(function(r) {
-            r.remove();
-        });
-        
-        // IGV breakdown (10.5%)
-        const igvRate = 0.105;
-        const total = totalGeneral;
-        const subtotal = total / (1 + igvRate);
-        const igv = total - subtotal;
-        
-        // Agregar filas de totales al final
-        var html = '';
-        html += '<tr class="dg-subtotal-row">' +
-            '<td colspan="3" class="dg-total-label">Subtotal</td>' +
-            '<td class="dg-total-val">S/ ' + subtotal.toFixed(2) + '</td>' +
-            '</tr>' +
-            '<tr class="dg-igv-row">' +
-            '<td colspan="3" class="dg-total-label">IGV (10.5%)</td>' +
-            '<td class="dg-total-val">S/ ' + igv.toFixed(2) + '</td>' +
-            '</tr>' +
-            '<tr class="dg-total-row">' +
-            '<td colspan="3" class="dg-total-label">TOTAL</td>' +
-            '<td class="dg-total-val">S/ ' + total.toFixed(2) + '</td>' +
-            '</tr>';
-        
-        tbody.insertAdjacentHTML('beforeend', html);
+        // Recalcular totales usando la función compartida
+        __recalculateTotals();
     };
     
     // === PREVISUALIZACIÓN: variable global para ticket seleccionado ===
