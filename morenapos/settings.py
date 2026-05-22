@@ -15,9 +15,9 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-key-change
 APIPERU_TOKEN = os.environ.get('APIPERU_TOKEN', '2bb538e5198295b0f3b7f1a6552df46a640fb362f9f8075dce3820a991ffef3f')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG activado para diagnosticar el error 500 en Azure
-# Cambiar a False cuando el error esté resuelto
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('true', '1', 'yes')
+# DEBUG forzado a True para diagnosticar el error 500 en Azure
+# TODO: Cambiar a False cuando el error esté resuelto
+DEBUG = True
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'morenapos.azurewebsites.net,pos.tradicionlamorena.com').split(',')
 
