@@ -155,7 +155,9 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = 'es-pe'
 TIME_ZONE = 'America/Lima'
 USE_I18N = True
-USE_TZ = True
+# USE_TZ=False para evitar el tipo datetimeoffset de SQL Server
+# que mssql-django 1.1.2 no soporta (ODBC SQL type -155)
+USE_TZ = False
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
