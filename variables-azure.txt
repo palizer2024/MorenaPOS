@@ -1,0 +1,31 @@
+========================================
+ VARIABLES DE ENTORNO - AZURE APP SERVICE
+ MorenaPOS
+========================================
+Agregar en: Azure Portal > App Service > Configuración > Variables de entorno
+
+----------------------------------------
+ Nombre                | Valor
+----------------------------------------
+DJANGO_SECRET_KEY      | CpaDi2EMRlu+yRJqtvOCDPIrS9fWM7vMdSGHp9YDxGZ5qXxOvwNu+g+TzBwRk+I9
+DJANGO_DEBUG           | False
+DJANGO_ALLOWED_HOSTS   | morenapos.azurewebsites.net,pos.tradicionlamorena.com
+DB_ENGINE              | mssql
+DB_NAME                | morena
+DB_HOST                | morena.database.windows.net
+DB_USER                | morena159
+DB_PASSWORD            | ZjIckH82e
+DB_DRIVER              | ODBC Driver 18 for SQL Server
+DJANGO_SECURE_SSL      | True
+DJANGO_SESSION_SECURE  | True
+DJANGO_CSRF_SECURE     | True
+CORS_ALLOWED_ORIGINS   | https://morenapos.azurewebsites.net,https://pos.tradicionlamorena.com
+
+========================================
+ PASOS EN AZURE PORTAL
+========================================
+1. Ir a App Service > Configuración > Variables de entorno
+2. Agregar CADA variable de la lista de arriba
+3. Guardar (click en "Guardar")
+4. Ir a Centro de implementación > Sincronizar
+5. Esperar 2-3 minutos y probar la URL
