@@ -17,7 +17,7 @@ APP_DIR="/home/site/wwwroot"
 # ============================================================
 echo ""
 echo "=== Verificando archivos ==="
-ls -la "$APP_DIR"
+ls -la "$APP_DIR" 2>/dev/null
 echo ""
 ls -la "$APP_DIR/morenapos/" 2>/dev/null || echo "No existe morenapos/"
 
@@ -37,42 +37,39 @@ echo "Python: $(python3 --version)"
 echo "Pip: $(pip3 --version)"
 
 # ============================================================
-# PASO 3: Instalar dependencias
+# PASO 3: Instalar dependencias (solo si faltan)
 # ============================================================
 echo ""
-echo "=== Instalando dependencias ==="
+echo "=== Verificando dependencias ==="
 
-# Buscar requirements.txt
-REQ_FILE=""
-if [ -f "$APP_DIR/requirements.txt" ]; then
-    REQ_FILE="$APP_DIR/requirements.txt"
-elif [ -f "$APP_DIR/morenapos/requirements.txt" ]; then
-    REQ_FILE="$APP_DIR/morenapos/requirements.txt"
+if ! python3 -c "import django" 2>/dev/null; then
+    echo "Instalando dependencias..."
+    REQ_FILE=""
+    if [ -f "$APP_DIR/requirements.txt" ]; then
+        REQ_FILE="$APP_DIR/requirements.txt"
+    elif [ -f "$APP_DIR/morenapos/requirements.txt" ]; then
+        REQ_FILE="$APP_DIR/morenapos/requirements.txt"
+    fi
+    if [ -n "$REQ_FILE" ]; then
+        pip3 install --no-cache-dir -r "$REQ_FILE" 2>&1
+        echo "✓ Dependencias instaladas"
+    fi
+else
+    echo "✓ Django ya está instalado"
 fi
 
-if [ -n "$REQ_FILE" ]; then
-    echo "Requirements: $REQ_FILE"
-    pip3 install --no-cache-dir -r "$REQ_FILE" 2>&1
-    echo "✓ Dependencias instaladas"
-fi
-
-# Verificar
-python3 -c "import django; print(f'✓ Django {django.get_version()}')" 2>&1
+python3 -c "import django; print(f'Django {django.get_version()}')" 2>&1
 
 # ============================================================
-# PASO 4: Recopilar estáticos
-# ============================================================
-echo ""
-echo "=== Recopilando estáticos ==="
-cd "$APP_DIR/morenapos"
-python3 manage.py collectstatic --noinput 2>&1 || echo "⚠ collectstatic falló"
-
-# ============================================================
-# PASO 5: Iniciar Gunicorn
+# PASO 4: Iniciar Gunicorn directamente (sin collectstatic)
 # ============================================================
 echo ""
 echo "=== Iniciando Gunicorn ==="
 cd "$APP_DIR/morenapos"
+echo "Directorio: $(pwd)"
+echo "Contenido:"
+ls -la
+
 exec gunicorn --bind=0.0.0.0:8000 \
     --workers=2 \
     --timeout=120 \
