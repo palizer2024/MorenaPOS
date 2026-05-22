@@ -46,6 +46,9 @@ INSTALLED_APPS = [
 AUTH_USER_MODEL = 'core.Usuario'
 
 MIDDLEWARE = [
+    # Middleware de diagnóstico (DEBE SER EL PRIMERO para capturar errores)
+    'core.diagnostic_middleware.DiagnosticMiddleware',
+    
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
