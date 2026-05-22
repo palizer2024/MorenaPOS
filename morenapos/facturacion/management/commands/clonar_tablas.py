@@ -61,17 +61,24 @@ class Command(BaseCommand):
         Clona registros de sede -> sedeclonada.
         Usa raw SQL porque el modelo Sede en core.models no tiene db_column
         y no mapea correctamente con las columnas reales de la BD.
+
+        NOTA: Se usa CAST(... AS datetime2) para evitar que pyodbc en Linux
+        falle con el tipo datetimeoffset (ODBC type -155) que usa la tabla sede.
         """
         self.stdout.write('\n--- Clonando sedes... ---')
 
         with connection.cursor() as cursor:
-            cursor.execute("SELECT Id, Nombre, ValorIgv, Identificador, SerieFactura, "
-                           "SerieBoleta, CorrelativoBoleta, CorrelativoFactura, "
-                           "SerieNotaCreditoBoleta, CorrelativoNotaCreditoBoleta, "
-                           "SerieNotaCreditoFactura, CorrelativoNotaCreditoFactura, "
-                           "Ruta, Token, SerieTicket, CorrelativoTicket, "
-                           "NombreImpresora, Created, Modified, UserCreated, "
-                           "UserModified, Estado FROM sede")
+            cursor.execute(
+                "SELECT Id, Nombre, ValorIgv, Identificador, SerieFactura, "
+                "SerieBoleta, CorrelativoBoleta, CorrelativoFactura, "
+                "SerieNotaCreditoBoleta, CorrelativoNotaCreditoBoleta, "
+                "SerieNotaCreditoFactura, CorrelativoNotaCreditoFactura, "
+                "Ruta, Token, SerieTicket, CorrelativoTicket, "
+                "NombreImpresora, "
+                "CAST(Created AS datetime2) AS Created, "
+                "CAST(Modified AS datetime2) AS Modified, "
+                "UserCreated, UserModified, Estado FROM sede"
+            )
             rows = cursor.fetchall()
 
         self.stdout.write(f'Sedes originales encontradas: {len(rows)}')
@@ -126,18 +133,37 @@ class Command(BaseCommand):
             self.stdout.write(f'Sedes saltadas (ya existían): {saltadas}')
 
     def _clonar_comprobantes(self, force):
-        """Clona registros de comprobante -> comprobanteclonada."""
+        """
+        Clona registros de comprobante -> comprobanteclonada.
+
+        NOTA: Usa SQL directo para leer comprobantes con CAST(Created AS datetime2)
+        porque la tabla comprobante original usa datetimeoffset (ODBC type -155)
+        que pyodbc en Linux no soporta.
+        """
         self.stdout.write('\n--- Clonando comprobantes... ---')
 
-        comprobantes = Comprobante.objects.all()
-        self.stdout.write(f'Comprobantes originales encontrados: {comprobantes.count()}')
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT Id, Id_Cliente, Id_Sede, Turno, ReferenciaTicket, "
+                "Serie, Correlativo, TipoComprobante, Total, EnvioSunat, "
+                "Identificador, UserCreated, "
+                "CAST(Created AS datetime2) AS Created, "
+                "Estado FROM comprobante"
+            )
+            rows = cursor.fetchall()
+
+        self.stdout.write(f'Comprobantes originales encontrados: {len(rows)}')
 
         creados = 0
         saltados = 0
 
-        for comp in comprobantes:
+        for row in rows:
+            (comp_id, id_cliente, id_sede, turno, referenciaticket,
+             serie, correlativo, tipocomprobante, total, enviosunat,
+             identificador, usercreated, created, estado) = row
+
             existe = ComprobanteClonado.objects.filter(
-                id_comprobante_original=comp.id
+                id_comprobante_original=comp_id
             ).exists()
 
             if existe and not force:
@@ -147,7 +173,7 @@ class Command(BaseCommand):
             if existe and force:
                 # Eliminar también los detalles clonados asociados
                 clonado = ComprobanteClonado.objects.get(
-                    id_comprobante_original=comp.id
+                    id_comprobante_original=comp_id
                 )
                 ComprobanteDetClonado.objects.filter(
                     id_comprobante_clonado=clonado.id
@@ -155,20 +181,20 @@ class Command(BaseCommand):
                 clonado.delete()
 
             ComprobanteClonado.objects.create(
-                id_comprobante_original=comp.id,
-                id_cliente=comp.id_cliente_id,
-                id_sede=comp.id_sede,
-                turno=comp.turno,
-                referenciaticket=comp.referenciaticket,
-                serie=comp.serie,
-                correlativo=comp.correlativo,
-                tipocomprobante=comp.tipocomprobante,
-                total=comp.total,
-                enviosunat=comp.enviosunat,
-                identificador=comp.identificador,
-                usercreated=comp.usercreated,
-                created=comp.created,
-                estado=comp.estado,
+                id_comprobante_original=comp_id,
+                id_cliente=id_cliente,
+                id_sede=id_sede,
+                turno=turno,
+                referenciaticket=referenciaticket,
+                serie=serie,
+                correlativo=correlativo,
+                tipocomprobante=tipocomprobante,
+                total=total,
+                enviosunat=enviosunat,
+                identificador=identificador,
+                usercreated=usercreated,
+                created=created,
+                estado=estado,
             )
             creados += 1
 

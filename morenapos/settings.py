@@ -15,11 +15,24 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-key-change
 APIPERU_TOKEN = os.environ.get('APIPERU_TOKEN', '2bb538e5198295b0f3b7f1a6552df46a640fb362f9f8075dce3820a991ffef3f')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG forzado a True para diagnosticar el error 500 en Azure
-# TODO: Cambiar a False cuando el error esté resuelto
-DEBUG = True
+# Leer desde variable de entorno; por defecto False en producción.
+# Para desarrollo local: set DJANGO_DEBUG=True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'morenapos.azurewebsites.net,pos.tradicionlamorena.com,127.0.0.1,localhost').split(',')
+# Azure App Service usa 169.254.129.x para health checks y proxy interno.
+# Se incluyen explícitamente para evitar DisallowedHost en los logs.
+_default_hosts = (
+    'morenapos.azurewebsites.net,'
+    'pos.tradicionlamorena.com,'
+    '169.254.129.1,'   # Azure load balancer / health check
+    '169.254.129.4,'   # Azure internal proxy
+    '.azurewebsites.net,'  # wildcard staging slots
+    '127.0.0.1,'
+    'localhost'
+)
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', _default_hosts).split(',')
+# Limpiar espacios en blanco que puedan venir de la variable de entorno
+ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS if h.strip()]
 
 # Application definition
 INSTALLED_APPS = [
