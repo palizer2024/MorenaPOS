@@ -1,29 +1,9 @@
 # Django y dependencias principales
 Django==5.0.6
 
-# Base de datos SQL Server (Azure SQL)
-# mssql-django es compatible con Python 3.12
-mssql-django==1.1.2
-
-# Frontend y UI
-django-htmx==1.20.0
-
-# Procesamiento asíncrono
-django-q2==1.10.0
-
-# Validación de datos
-pydantic==2.6.4
-
-# Seguridad y autenticación
-django-cors-headers==4.4.0
-django-ratelimit==3.0.1
-
 # Utilidades
 python-dotenv==1.0.1
 whitenoise==6.6.0
-
-# Desarrollo
-python-decouple==3.8
 
 # Facturación electrónica (Nubefact)
 requests==2.31.0
