@@ -1649,7 +1649,16 @@ document.addEventListener('DOMContentLoaded', function() {
             })
         })
         .then(function(response) {
-            return response.json().then(function(data) {
+            // Intentar parsear como JSON
+            return response.text().then(function(text) {
+                var data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    // No es JSON - probablemente HTML de error
+                    console.error('Respuesta no JSON recibida:', text.substring(0, 500));
+                    throw new Error('Error del servidor (recibió HTML en lugar de JSON). Ver consola para detalles.');
+                }
                 if (!response.ok) throw new Error(data.error || 'Error ' + response.status);
                 return data;
             });

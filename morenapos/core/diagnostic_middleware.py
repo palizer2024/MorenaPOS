@@ -2,16 +2,20 @@
 Middleware de diagnóstico para Azure App Service.
 Captura cualquier excepción no manejada y la muestra en la respuesta HTTP
 para poder diagnosticar errores 500.
+- Si la petición es a /api/*, devuelve JSON en lugar de HTML.
 """
 import traceback
 import sys
 import os
+import json
 
 
 class DiagnosticMiddleware:
     """
     Middleware que captura excepciones y las muestra en la respuesta.
     Útil cuando DEBUG=True no funciona en Azure App Service.
+    - Para rutas /api/* devuelve JSON (para que el frontend no reciba HTML inesperado).
+    - Para otras rutas devuelve HTML con diagnóstico.
     """
     
     def __init__(self, get_response):
@@ -29,9 +33,22 @@ class DiagnosticMiddleware:
             print(f"DIAGNOSTIC ERROR: {e}", file=sys.stderr)
             print(tb_text, file=sys.stderr)
             
-            # Devolver una respuesta HTML con el error
-            from django.http import HttpResponse
-            html = f"""<!DOCTYPE html>
+            # Determinar si es una petición a la API
+            path = request.path_info if hasattr(request, 'path_info') else (request.path if hasattr(request, 'path') else '')
+            is_api_request = path.startswith('/api/')
+            
+            if is_api_request:
+                # Para APIs, devolver JSON con el error detallado
+                from django.http import JsonResponse
+                return JsonResponse({
+                    'error': f'Error interno del servidor: {type(e).__name__}: {str(e)}',
+                    'detalle': tb_text,
+                    'path': path,
+                }, status=500)
+            else:
+                # Para páginas normales, devolver HTML con diagnóstico
+                from django.http import HttpResponse
+                html = f"""<!DOCTYPE html>
 <html>
 <head><title>Error de diagnóstico</title></head>
 <body style="font-family: monospace; padding: 20px; background: #f5f5f5;">
@@ -56,4 +73,4 @@ DB_DRIVER: {os.environ.get('DB_DRIVER', 'not set')}
     </pre>
 </body>
 </html>"""
-            return HttpResponse(html, status=500, content_type='text/html; charset=utf-8')
+                return HttpResponse(html, status=500, content_type='text/html; charset=utf-8')
