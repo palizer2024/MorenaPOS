@@ -739,6 +739,13 @@
             Tickets - {{ sede_nombre }}
         </div>
         <div class="card-body">
+            <!-- Botón Nuevo Comprobante -->
+            <div style="margin-bottom:8px;">
+                <button onclick="location.reload()" style="width:100%;padding:10px 16px;background:linear-gradient(135deg,#FC523B,#e0452f);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 8px rgba(252,82,59,0.3);transition:all 0.2s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(252,82,59,0.5)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(252,82,59,0.3)'">
+                    <i class="fas fa-plus-circle" style="font-size:18px;"></i>
+                    Nuevo Comprobante
+                </button>
+            </div>
             <!-- Selector de fecha compacto -->
             <div class="date-selector">
                 <button class="arrow-btn" onclick="window.__prevDay()" title="Día anterior"><i class="fas fa-chevron-left"></i></button>
@@ -804,6 +811,14 @@
             <div class="comprobante-tabs">
                 <button class="tab-btn active" id="btnBoleta" onclick="window.__setTipo('boleta')">BOLETA</button>
                 <button class="tab-btn" id="btnFactura" onclick="window.__setTipo('factura')">FACTURA</button>
+            </div>
+            
+            <!-- Checkbox Sin DNI (solo para boletas) - arriba del campo DNI -->
+            <div class="comprobante-field" id="sinDniField" style="margin-top:2px;">
+                <label style="display:inline-flex;align-items:center;cursor:pointer;font-size:10px;font-weight:600;color:#666;white-space:nowrap;gap:0;">
+                    <input type="checkbox" id="chkSinDni" onchange="window.__onSinDniChange(this)" style="margin:0 2px 0 0;">
+                    Sin DNI (Consumidor Final)
+                </label>
             </div>
             
             <!-- Campos del comprobante -->
@@ -887,9 +902,9 @@
                 <i class="fas fa-trash-alt"></i> Quitar producto
             </button>
             
-            <!-- Botón Previsualizar -->
+            <!-- Botón Emitir -->
             <button class="btn-preview" id="btnPreview" onclick="window.__generarPreview()" disabled>
-                <i class="fas fa-eye"></i> Previsualizar
+                <i class="fas fa-paper-plane"></i> Emitir
             </button>
         </div>
     </div>
@@ -898,7 +913,7 @@
     <div class="card">
         <div class="card-header">
             <i class="fas fa-file-pdf" style="color:#FC523B;"></i>
-            Previsualización
+            Comprobante
         </div>
         <div class="card-body" style="padding:4px;display:flex;flex-direction:column;overflow:hidden;">
             <!-- Sección de previsualización PDF (visible al generar) -->
@@ -907,14 +922,45 @@
                 <div class="preview-pdf-container" id="previewPdfContainer">
                     <div class="pdf-loading" id="pdfLoading">
                         <i class="fas fa-file-pdf" style="margin-right:6px;color:#FC523B;"></i>
-                        Genere una previsualización desde la tarjeta Comprobante
+                        Genere un comprobante desde la tarjeta Comprobante
                     </div>
                     <iframe id="pdfIframe" style="display:none;"></iframe>
                 </div>
             </div>
+            <!-- Botón Imprimir (visible solo después de emitir) -->
+            <button class="btn-print" id="btnPrint" style="display:none;margin-top:4px;padding:6px 12px;background:#28a745;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;" onclick="window.__imprimirComprobante()">
+                <i class="fas fa-print"></i> Imprimir
+            </button>
         </div>
     </div>
 </div>
+
+<!-- MODAL DE ÉXITO -->
+<div class="success-modal-overlay" id="successModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;justify-content:center;align-items:center;" onclick="if(event.target===this)window.__cerrarModalExito()">
+    <div class="success-modal" style="background:#fff;border-radius:12px;padding:30px;max-width:420px;width:90%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.3);animation:modalFadeIn 0.3s ease;">
+        <div style="font-size:60px;color:#28a745;margin-bottom:15px;">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <h2 style="margin:0 0 8px 0;color:#333;font-size:20px;">¡Comprobante Emitido!</h2>
+        <p id="successModalInfo" style="margin:0 0 20px 0;color:#666;font-size:14px;"></p>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+            <button onclick="window.__imprimirComprobante()" style="padding:10px 20px;background:#28a745;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;">
+                <i class="fas fa-print"></i> Imprimir
+            </button>
+            <button onclick="window.__cerrarModalExito()" style="padding:10px 20px;background:#6c757d;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;">
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes modalFadeIn {
+    from { opacity:0; transform:scale(0.8); }
+    to { opacity:1; transform:scale(1); }
+}
+</style>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -1053,6 +1099,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const btnBoleta = document.getElementById('btnBoleta');
         const btnFactura = document.getElementById('btnFactura');
         const dniField = document.getElementById('dniField');
+        const sinDniField = document.getElementById('sinDniField');
+        const chkSinDni = document.getElementById('chkSinDni');
         const lblDni = dniField ? dniField.querySelector('label') : null;
         const txtDni = document.getElementById('txtDni');
         const btnAbrirModal = document.getElementById('btnAbrirModalBuscar');
@@ -1067,6 +1115,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             if (btnAbrirModal) btnAbrirModal.innerHTML = '<i class="fas fa-globe"></i> Buscar DNI';
             if (dniField) dniField.style.display = 'block';
+            // Mostrar checkbox Sin DNI solo para boletas
+            if (sinDniField) sinDniField.style.display = 'block';
         } else {
             btnFactura.classList.add('active');
             btnBoleta.classList.remove('active');
@@ -1077,6 +1127,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             if (btnAbrirModal) btnAbrirModal.innerHTML = '<i class="fas fa-globe"></i> Buscar RUC';
             if (dniField) dniField.style.display = 'block';
+            // Ocultar checkbox Sin DNI para facturas y desmarcar si estaba marcado
+            if (sinDniField) sinDniField.style.display = 'none';
+            if (chkSinDni && chkSinDni.checked) {
+                chkSinDni.checked = false;
+                window.__onSinDniChange(chkSinDni);
+            }
         }
     };
     
@@ -1493,13 +1549,46 @@ document.addEventListener('DOMContentLoaded', function() {
         __recalculateTotals();
     };
     
-    // === PREVISUALIZACIÓN: variable global para ticket seleccionado ===
+    // === EMISIÓN: variables globales ===
     var __currentTicketId = null;
+    var __ultimoPdfUrl = null;
+    var __ultimoComprobanteId = null;
+    var __ultimoTipoLabel = '';
+    var __ultimoSerieNumero = '';
     
-    // === PREVISUALIZACIÓN: generar PDF con Nubefact ===
+    // === SIN DNI: checkbox para Consumidor Final ===
+    window.__onSinDniChange = function(checkbox) {
+        const txtDni = document.getElementById('txtDni');
+        const txtNombre = document.getElementById('txtNombre');
+        const txtDireccion = document.getElementById('txtDireccion');
+        const btnAbrirModal = document.getElementById('btnAbrirModalBuscar');
+        
+        if (checkbox.checked) {
+            // Sin DNI: establecer Consumidor Final
+            txtDni.value = '00000000';
+            txtDni.disabled = true;
+            txtNombre.value = 'CONSUMIDOR FINAL';
+            txtNombre.disabled = true;
+            txtDireccion.value = '';
+            txtDireccion.disabled = true;
+            if (btnAbrirModal) btnAbrirModal.disabled = true;
+        } else {
+            // Restaurar campos
+            txtDni.value = '';
+            txtDni.disabled = false;
+            txtNombre.value = '';
+            txtNombre.disabled = false;
+            txtDireccion.value = '';
+            txtDireccion.disabled = false;
+            if (btnAbrirModal) btnAbrirModal.disabled = false;
+        }
+    };
+    
+    // === EMISIÓN: generar y emitir comprobante con Nubefact ===
     window.__generarPreview = function() {
         const btnPreview = document.getElementById('btnPreview');
         const ticketId = __currentTicketId;
+        const chkSinDni = document.getElementById('chkSinDni');
         
         if (!ticketId) {
             alert('Seleccione un ticket primero');
@@ -1507,22 +1596,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const tipo = document.getElementById('btnBoleta').classList.contains('active') ? 'boleta' : 'factura';
-        const documento = document.getElementById('txtDni').value.trim();
-        const nombre = document.getElementById('txtNombre').value.trim();
-        const direccion = document.getElementById('txtDireccion').value.trim();
+        const sinDni = chkSinDni && chkSinDni.checked;
         
-        if (!documento) {
-            alert('Ingrese el número de documento del cliente');
-            return;
-        }
-        if (!nombre) {
-            alert('Ingrese el nombre del cliente');
-            return;
+        let documento, nombre, direccion;
+        
+        if (sinDni) {
+            // Consumidor Final: usar datos fijos
+            documento = '00000000';
+            nombre = 'CONSUMIDOR FINAL';
+            direccion = '';
+        } else {
+            documento = document.getElementById('txtDni').value.trim();
+            nombre = document.getElementById('txtNombre').value.trim();
+            direccion = document.getElementById('txtDireccion').value.trim();
+            
+            if (!documento) {
+                alert('Ingrese el número de documento del cliente');
+                return;
+            }
+            if (!nombre) {
+                alert('Ingrese el nombre del cliente');
+                return;
+            }
         }
         
         // Deshabilitar botón
         btnPreview.disabled = true;
-        btnPreview.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+        btnPreview.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Emitiendo...';
         
         // Mostrar preview en tarjeta 3 (derecha)
         const previewSection = document.getElementById('previewSection');
@@ -1544,7 +1644,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 tipo: tipo,
                 documento: documento,
                 nombre: nombre,
-                direccion: direccion
+                direccion: direccion,
+                sin_dni: sinDni
             })
         })
         .then(function(response) {
@@ -1555,12 +1656,15 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(function(data) {
             if (data.success) {
-                // Mostrar info del comprobante
+                // Mostrar info del comprobante emitido
                 var tipoLabel = data.tipo === 2 ? 'BOLETA' : 'FACTURA';
+                var serieNumero = data.serie + '-' + data.numero;
+                
                 previewInfo.style.display = 'block';
                 previewInfo.innerHTML = '<strong>' + tipoLabel + '</strong>: ' +
-                    data.serie + '-' + data.numero + ' | ' +
-                    '<a href="' + data.url + '" target="_blank" style="color:#FC523B;">Ver en Nubefact</a>';
+                    serieNumero + ' | ' +
+                    '<a href="' + data.url + '" target="_blank" style="color:#FC523B;">Ver en Nubefact</a>' +
+                    (data.comprobante_id ? ' | <span style="color:#28a745;"><i class="fas fa-check-circle"></i> Emitido</span>' : '');
                 
                 // Mostrar PDF embebido
                 if (data.pdf_zip_base64) {
@@ -1571,8 +1675,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         pdfArray[i] = pdfBytes.charCodeAt(i);
                     }
                     var blob = new Blob([pdfArray], { type: 'application/pdf' });
-                    var url = URL.createObjectURL(blob);
-                    pdfIframe.src = url;
+                    var pdfUrl = URL.createObjectURL(blob);
+                    pdfIframe.src = pdfUrl;
                     pdfIframe.style.display = 'block';
                     pdfLoading.style.display = 'none';
                 } else if (data.enlace_del_pdf) {
@@ -1582,8 +1686,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     pdfIframe.style.display = 'block';
                     pdfLoading.style.display = 'none';
                 } else {
-                    pdfLoading.innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i> PDF generado. <a href="' + data.url + '" target="_blank" style="color:#FC523B;">Abrir en Nubefact</a>';
+                    pdfLoading.innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i> Comprobante emitido. <a href="' + data.url + '" target="_blank" style="color:#FC523B;">Abrir en Nubefact</a>';
                 }
+                
+                // Guardar datos para impresión
+                __ultimoPdfUrl = data.enlace_del_pdf || '';
+                __ultimoComprobanteId = data.comprobante_id || null;
+                __ultimoTipoLabel = tipoLabel;
+                __ultimoSerieNumero = serieNumero;
+                
+                // Mostrar botón Imprimir en la tarjeta derecha
+                document.getElementById('btnPrint').style.display = 'block';
+                
+                // Mostrar modal de éxito
+                window.__mostrarModalExito(tipoLabel, serieNumero);
             } else {
                 previewInfo.style.display = 'block';
                 var detalleHtml = '';
@@ -1605,7 +1721,53 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .finally(function() {
             btnPreview.disabled = false;
-            btnPreview.innerHTML = '<i class="fas fa-eye"></i> Previsualizar';
+            btnPreview.innerHTML = '<i class="fas fa-paper-plane"></i> Emitir';
+        });
+    };
+    
+    // === MODAL DE ÉXITO ===
+    window.__mostrarModalExito = function(tipoLabel, serieNumero) {
+        document.getElementById('successModalInfo').textContent = tipoLabel + ': ' + serieNumero + ' emitido correctamente.';
+        document.getElementById('successModal').style.display = 'flex';
+    };
+    
+    window.__cerrarModalExito = function() {
+        document.getElementById('successModal').style.display = 'none';
+    };
+    
+    // === IMPRIMIR COMPROBANTE ===
+    window.__imprimirComprobante = function() {
+        var pdfUrl = __ultimoPdfUrl;
+        if (!pdfUrl) {
+            alert('No hay PDF disponible para imprimir');
+            return;
+        }
+        var btnPrint = document.getElementById('btnPrint');
+        if (btnPrint) {
+            btnPrint.disabled = true;
+            btnPrint.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Imprimiendo...';
+        }
+        fetch('/api/imprimir-comprobante/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify({ pdf_url: pdfUrl, comprobante_id: __ultimoComprobanteId })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                alert(data.mensaje || 'Comprobante enviado a la impresora');
+            } else {
+                alert('Error al imprimir: ' + (data.error || 'Error desconocido'));
+            }
+        })
+        .catch(function(err) {
+            alert('Error al imprimir: ' + err.message);
+        })
+        .finally(function() {
+            if (btnPrint) {
+                btnPrint.disabled = false;
+                btnPrint.innerHTML = '<i class="fas fa-print"></i> Imprimir';
+            }
         });
     };
     

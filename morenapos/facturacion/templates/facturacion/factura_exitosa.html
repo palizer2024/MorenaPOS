@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Factura Emitida</title>
+    <link rel="stylesheet" href="{% static 'css/morenapos.css' %}">
+</head>
+<body>
+    <h1>Factura Emitida Exitosamente</h1>
+    <p>El comprobante ha sido guardado en la base de datos.</p>
+    <p><strong>ID del Comprobante:</strong> {{ comprobante_id }}</p>
+    <a href="{% url 'facturacion:emision_factura' %}">Emitir otra factura</a>
+</body>
+</html>

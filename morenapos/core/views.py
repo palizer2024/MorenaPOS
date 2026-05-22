@@ -301,71 +301,57 @@ def api_buscar_cliente(request, query):
 @require_http_methods(["POST"])
 def api_previsualizar_comprobante(request):
     """
-    API que genera una previsualización de Boleta/Factura usando Nubefact (demo).
-    Envía los datos a Nubefact con enviar_automaticamente_a_la_sunat = False
-    para que genere el PDF sin enviar a SUNAT.
-    Retorna el PDF en base64, URL del documento, y datos de la respuesta.
+    API que genera y emite una Boleta/Factura real usando Nubefact.
+    Usa los datos de sedeclonada para ruta, token, series y correlativos.
+    Guarda el comprobante en comprobanteclonada y su detalle en comprobantedetclonada.
+    Auto-incrementa el correlativo en sedeclonada.
     """
     import json
     import requests
     from datetime import datetime, timedelta
-    
+    from facturacion.models import SedeClonada, ComprobanteClonado, ComprobanteDetClonado
+
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'JSON inválido'}, status=400)
-    
+
     ticket_id = data.get('ticket_id')
     tipo = data.get('tipo', 'boleta')  # 'boleta' o 'factura'
     cliente_documento = data.get('documento', '').strip()
     cliente_nombre = data.get('nombre', '').strip()
     cliente_direccion = data.get('direccion', '').strip()
-    
+    sin_dni = data.get('sin_dni', False)
+
     if not ticket_id:
         return JsonResponse({'error': 'ticket_id es requerido'}, status=400)
-    
+
     sede_id = request.session.get('sede_id')
     if not sede_id:
         return JsonResponse({'error': 'Sin sede seleccionada'}, status=400)
-    
-    # Obtener datos de la sede (Nubefact ruta/token, valor_igv)
-    # NOTA: serie_boleta, correlativo_boleta, serie_factura, correlativo_factura
-    # no existen en la DB real, así que usamos valores fijos para la previsualización
-    with connection.cursor() as cursor:
-        cursor.execute("""
-            SELECT ruta, token
-            FROM sede WHERE id = %s AND estado = 1
-        """, [sede_id])
-        sede_row = cursor.fetchone()
-    
-    if not sede_row:
-        return JsonResponse({'error': 'Sede no encontrada'}, status=400)
-    
-    nubefact_ruta = (sede_row[0] or '').strip()
-    nubefact_token = (sede_row[1] or '').strip()
-    valor_igv = 10.5  # IGV fijo 10.5% (no usar el de la tabla porque está mal)
-    
-    # Usar valores fijos para la previsualización (demo)
-    # No se guarda nada en DB, solo es una simulación
+
+    # Obtener datos de sedeclonada (ruta, token, series, correlativos)
+    try:
+        sede_clonada = SedeClonada.objects.get(id_sede_original=sede_id)
+    except SedeClonada.DoesNotExist:
+        return JsonResponse({'error': 'Sede no encontrada en sedeclonada. Ejecute: python manage.py clonar_tablas --solo-sedes'}, status=400)
+
+    nubefact_ruta = (sede_clonada.ruta or '').strip()
+    nubefact_token = (sede_clonada.token or '').strip()
+    valor_igv = float(sede_clonada.valor_igv) if sede_clonada.valor_igv else 10.5
+
     if not nubefact_ruta:
-        nubefact_ruta = "https://demo.nubefact.com/api/v1/03989d1a-6c8c-4b71-b1cd-7d37001deaa0"
+        return JsonResponse({'error': 'La sede no tiene configurada la ruta de Nubefact en sedeclonada'}, status=400)
     if not nubefact_token:
-        nubefact_token = "d0a80b88cde446d092025465bdb4673e103a0d881ca6479ebbab10664dbc5677"
-    
-    # Series y correlativos para demo
-    # Según Nubefact, el último número registrado es 10393
-    # Solo se aceptan 200 correlativos siguientes (hasta 10593)
-    # Máximo 8 caracteres para el número
-    # Usamos un contador incremental único basado en timestamp
-    import time as time_module
-    # Tomamos los milisegundos del día (0-86399999) y lo limitamos a rango 200
-    t = time_module.time()
-    ms_del_dia = int((t - int(t / 86400) * 86400) * 1000)  # milisegundos desde medianoche UTC
-    correlativo = 10394 + (ms_del_dia % 200)  # Rango: 10394 - 10593
-    serie_boleta = "BBB1"
-    correlativo_boleta = correlativo
-    serie_factura = "FFF1"
-    correlativo_factura = correlativo
+        return JsonResponse({'error': 'La sede no tiene configurado el token de Nubefact en sedeclonada'}, status=400)
+
+    # Obtener serie y auto-incrementar correlativo desde sedeclonada
+    if tipo == 'boleta':
+        serie = sede_clonada.serie_boleta
+        correlativo = sede_clonada.get_next_correlativo('BO')
+    else:
+        serie = sede_clonada.serie_factura
+        correlativo = sede_clonada.get_next_correlativo('FA')
     
     # Obtener detalle del ticket
     with connection.cursor() as cursor:
@@ -404,17 +390,11 @@ def api_previsualizar_comprobante(request):
     # 1 = Factura, 2 = Boleta
     tipo_comprobante = 2 if tipo == 'boleta' else 1
     
-    # Serie y correlativo
-    if tipo == 'boleta':
-        serie = serie_boleta if serie_boleta else 'BBB1'
-        numero = correlativo_boleta + 1  # Preview: correlativo siguiente
-    else:
-        serie = serie_factura if serie_factura else 'FFF1'
-        numero = correlativo_factura + 1
-    
     # Tipo de documento del cliente
-    # 1: DNI, 6: RUC, -: Otros
-    if len(cliente_documento) == 8:
+    # 1: DNI, 6: RUC, 0: Sin Documento / Doc. identidad de país de origen
+    if sin_dni:
+        cliente_tipo_doc = 0  # Sin Documento (Consumidor Final)
+    elif len(cliente_documento) == 8:
         cliente_tipo_doc = 1  # DNI
     elif len(cliente_documento) == 11:
         cliente_tipo_doc = 6  # RUC
@@ -455,16 +435,11 @@ def api_previsualizar_comprobante(request):
         })
     
     # Construir JSON para Nubefact
-    # Basado en la documentación oficial de Nubefact:
-    # - Content-Type: application/json
-    # - fecha_de_emision: formato DD-MM-AAAA
-    # - cliente_tipo_de_documento: String de 1 carácter ("6", "1", "-")
-    # - Campos opcionales vacíos como string ""
     invoice = {
         "operacion": "generar_comprobante",
         "tipo_de_comprobante": tipo_comprobante,
         "serie": serie,
-        "numero": numero,
+        "numero": str(correlativo),
         "sunat_transaction": 1,
         "cliente_tipo_de_documento": str(cliente_tipo_doc),
         "cliente_numero_de_documento": cliente_documento,
@@ -497,13 +472,13 @@ def api_previsualizar_comprobante(request):
         "total_retencion": "",
         "total_impuestos_bolsas": "",
         "detraccion": False,
-        "observaciones": "PREVISUALIZACION - NO VALIDO COMO COMPROBANTE",
+        "observaciones": "",
         "documento_que_se_modifica_tipo": "",
         "documento_que_se_modifica_serie": "",
         "documento_que_se_modifica_numero": "",
         "tipo_de_nota_de_credito": "",
         "tipo_de_nota_de_debito": "",
-        "enviar_automaticamente_a_la_sunat": False,
+        "enviar_automaticamente_a_la_sunat": True,
         "enviar_automaticamente_al_cliente": False,
         "condiciones_de_pago": "",
         "medio_de_pago": "",
@@ -515,9 +490,6 @@ def api_previsualizar_comprobante(request):
     
     # Enviar a Nubefact
     try:
-        # Según la documentación oficial de Nubefact:
-        # - Content-Type: application/json
-        # - Enviar el JSON en el cuerpo (body)
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Token token={nubefact_token}"
@@ -550,7 +522,56 @@ def api_previsualizar_comprobante(request):
                 'detalle': nubefact_resp['errors']
             }, status=400)
         
-        # Devolver datos útiles al frontend
+        # === GUARDAR EN comprobanteclonada y comprobantedetclonada ===
+        from django.db import transaction as db_transaction
+        
+        with db_transaction.atomic():
+            # Generar un ID negativo único para comprobantes emitidos desde Nubefact
+            # (no clonados), para evitar violar la constraint UNIQUE
+            from django.db.models import Min
+            min_id = ComprobanteClonado.objects.aggregate(min_id=Min('id_comprobante_original'))['min_id'] or 0
+            next_negative_id = min(min_id - 1, -1)
+            
+            # Crear el comprobante clonado
+            comprobante_clonado = ComprobanteClonado.objects.create(
+                id_comprobante_original=next_negative_id,
+                id_cliente=0,
+                id_sede=sede_id,
+                turno=request.session.get('turno', ''),
+                referenciaticket=str(ticket_id),
+                serie=serie,
+                correlativo=correlativo,
+                tipocomprobante='BOLETA' if tipo == 'boleta' else 'FACTURA',
+                total=round(total_general, 2),
+                enviosunat=1 if nubefact_resp.get('aceptada_por_sunat', False) else 0,
+                identificador=0,
+                usercreated=request.session.get('usuario_login', ''),
+                created=fecha_emision,
+                estado=True,
+                enviado_sunat=True,
+                respuesta_sunat=json.dumps(nubefact_resp),
+                fecha_envio_sunat=datetime.now(),
+            )
+            
+            # Crear los detalles clonados
+            from django.db.models import Min as MinDet
+            min_det_id = ComprobanteDetClonado.objects.aggregate(min_id=MinDet('id_detalle_original'))['min_id'] or 0
+            next_det_negative_id = min(min_det_id - 1, -1)
+            
+            for i, row in enumerate(det_rows):
+                ComprobanteDetClonado.objects.create(
+                    id_detalle_original=next_det_negative_id - i,  # IDs negativos únicos
+                    id_comprobante_clonado=comprobante_clonado,
+                    id_producto=int(row[0]) if row[0] else 0,
+                    descripcion=row[1],
+                    tipoventa='',
+                    codproductosunat='',
+                    cantidad=float(row[2]) if row[2] else 1,
+                    preciounitario=float(row[3]) if row[3] else 0,
+                    total=float(row[4]) if row[4] else 0,
+                )
+        
+        # Devolver datos al frontend
         return JsonResponse({
             'success': True,
             'tipo': nubefact_resp.get('tipo'),
@@ -565,12 +586,13 @@ def api_previsualizar_comprobante(request):
             'cadena_para_codigo_qr': nubefact_resp.get('cadena_para_codigo_qr', ''),
             'codigo_hash': nubefact_resp.get('codigo_hash', ''),
             'sunat_description': nubefact_resp.get('sunat_description', ''),
+            'comprobante_id': comprobante_clonado.id,
         })
         
     except requests.exceptions.Timeout:
         return JsonResponse({'error': 'Tiempo de espera agotado al conectar con Nubefact'}, status=504)
     except requests.exceptions.ConnectionError:
-        return JsonResponse({'error': 'No se pudo conectar con Nubefact (demo.nubefact.com). Verifique su conexión a internet.'}, status=502)
+        return JsonResponse({'error': 'No se pudo conectar con Nubefact. Verifique su conexión a internet.'}, status=502)
     except Exception as e:
         return JsonResponse({'error': f'Error al generar comprobante: {str(e)}'}, status=500)
 
@@ -602,3 +624,137 @@ def api_proxy_pdf(request):
         return response
     except req_lib.exceptions.RequestException as e:
         return JsonResponse({'error': f'Error al descargar PDF: {str(e)}'}, status=502)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_impresora_info(request):
+    """
+    API que devuelve el nombre de la impresora configurada en sedeclonada
+    para la sede actual.
+    """
+    from facturacion.models import SedeClonada
+    
+    sede_id = request.session.get('sede_id')
+    if not sede_id:
+        return JsonResponse({'error': 'Sin sede seleccionada'}, status=400)
+    
+    try:
+        sede_clonada = SedeClonada.objects.get(id_sede_original=sede_id)
+        nombre_impresora = (sede_clonada.nombre_impresora or '').strip()
+        return JsonResponse({
+            'success': True,
+            'nombre_impresora': nombre_impresora,
+        })
+    except SedeClonada.DoesNotExist:
+        return JsonResponse({'error': 'Sede no encontrada en sedeclonada'}, status=400)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_imprimir_comprobante(request):
+    """
+    API que imprime un comprobante usando la impresora configurada en sedeclonada.
+    Envía el PDF a la impresora usando QZ Tray (socket) o impresión nativa de Windows.
+    """
+    import json
+    import tempfile
+    import os
+    import subprocess
+    
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'JSON inválido'}, status=400)
+    
+    pdf_url = data.get('pdf_url', '')
+    comprobante_id = data.get('comprobante_id')
+    
+    if not pdf_url and not comprobante_id:
+        return JsonResponse({'error': 'Se requiere pdf_url o comprobante_id'}, status=400)
+    
+    sede_id = request.session.get('sede_id')
+    if not sede_id:
+        return JsonResponse({'error': 'Sin sede seleccionada'}, status=400)
+    
+    from facturacion.models import SedeClonada
+    try:
+        sede_clonada = SedeClonada.objects.get(id_sede_original=sede_id)
+        nombre_impresora = (sede_clonada.nombre_impresora or '').strip()
+    except SedeClonada.DoesNotExist:
+        return JsonResponse({'error': 'Sede no encontrada en sedeclonada'}, status=400)
+    
+    if not nombre_impresora:
+        return JsonResponse({'error': 'La sede no tiene impresora configurada en sedeclonada'}, status=400)
+    
+    # Descargar el PDF
+    import requests as req_lib
+    try:
+        pdf_resp = req_lib.get(pdf_url, timeout=30)
+        pdf_resp.raise_for_status()
+    except req_lib.exceptions.RequestException as e:
+        return JsonResponse({'error': f'Error al descargar PDF para imprimir: {str(e)}'}, status=502)
+    
+    # Guardar PDF temporal y enviar a impresora
+    try:
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp:
+            tmp.write(pdf_resp.content)
+            tmp_path = tmp.name
+        
+        # Buscar SumatraPDF (mejor para imprimir PDFs en ticketeras de rollo)
+        sumatra_paths = [
+            r'C:\Program Files\SumatraPDF\SumatraPDF.exe',
+            r'C:\Program Files (x86)\SumatraPDF\SumatraPDF.exe',
+        ]
+        sumatra_exe = None
+        for sp in sumatra_paths:
+            if os.path.exists(sp):
+                sumatra_exe = sp
+                break
+        
+        if sumatra_exe:
+            # SumatraPDF respeta la configuración de papel de la impresora
+            # Si la impresora térmica está configurada con papel de 80mm,
+            # SumatraPDF escalará el PDF automáticamente a ese tamaño
+            subprocess.run(
+                [sumatra_exe, '-print-to', nombre_impresora, '-exit-on-print', tmp_path],
+                capture_output=True,
+                timeout=60
+            )
+        else:
+            # Intentar con PowerShell usando Start-Process con print verb
+            # Esto usa la configuración predeterminada de la impresora
+            ps_print = f'''
+            Start-Process -FilePath "{tmp_path}" -Verb Print -PassThru |
+            ForEach-Object {{ $_ | Wait-Process -Timeout 60 }}
+            '''
+            try:
+                subprocess.run(
+                    ['powershell', '-Command', ps_print],
+                    capture_output=True,
+                    timeout=60
+                )
+            except Exception:
+                # Último recurso: comando nativo de Windows
+                subprocess.run(
+                    ['cmd.exe', '/c', 'start', '/min', '/wait', tmp_path, '/print', nombre_impresora],
+                    capture_output=True,
+                    timeout=60
+                )
+        
+        # Limpiar archivo temporal
+        try:
+            os.unlink(tmp_path)
+        except:
+            pass
+        
+        return JsonResponse({
+            'success': True,
+            'mensaje': f'Comprobante enviado a la impresora: {nombre_impresora}',
+            'nombre_impresora': nombre_impresora,
+        })
+        
+    except subprocess.TimeoutExpired:
+        return JsonResponse({'error': 'Tiempo de espera agotado al imprimir'}, status=504)
+    except Exception as e:
+        return JsonResponse({'error': f'Error al imprimir: {str(e)}'}, status=500)

@@ -19,7 +19,7 @@ APIPERU_TOKEN = os.environ.get('APIPERU_TOKEN', '2bb538e5198295b0f3b7f1a6552df46
 # TODO: Cambiar a False cuando el error esté resuelto
 DEBUG = True
 
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'morenapos.azurewebsites.net,pos.tradicionlamorena.com').split(',')
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'morenapos.azurewebsites.net,pos.tradicionlamorena.com,127.0.0.1,localhost').split(',')
 
 # Application definition
 INSTALLED_APPS = [

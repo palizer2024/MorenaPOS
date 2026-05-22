@@ -9,4 +9,6 @@ urlpatterns = [
     path('buscar-cliente/<str:query>/', views.api_buscar_cliente, name='buscar_cliente'),
     path('previsualizar-comprobante/', views.api_previsualizar_comprobante, name='previsualizar_comprobante'),
     path('proxy-pdf/', views.api_proxy_pdf, name='proxy_pdf'),
+    path('impresora-info/', views.api_impresora_info, name='impresora_info'),
+    path('imprimir-comprobante/', views.api_imprimir_comprobante, name='imprimir_comprobante'),
 ]

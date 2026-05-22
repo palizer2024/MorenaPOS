@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Emitir Factura</title>
+    <link rel="stylesheet" href="{% static 'css/morenapos.css' %}">
+</head>
+<body>
+    <h1>Emitir Factura</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div>
+            <label>Cliente ID:</label>
+            <input type="number" name="cliente_id" required>
+        </div>
+        <div>
+            <label>Sede ID:</label>
+            <input type="number" name="sede_id" required>
+        </div>
+        <div>
+            <label>Serie:</label>
+            <input type="text" name="serie" placeholder="FA, BO, NC-BO, NC-FA" required>
+        </div>
+        <div>
+            <label>Productos (JSON):</label>
+            <textarea name="productos" rows="5"></textarea>
+        </div>
+        <button type="submit">Emitir Factura</button>
+    </form>
+</body>
+</html>
