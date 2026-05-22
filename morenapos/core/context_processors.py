@@ -15,10 +15,19 @@ def sede_context(request):
     sede_id = request.session.get('sede_id')
     if sede_id:
         with connection.cursor() as cursor:
-            cursor.execute("SELECT id, nombre FROM sede WHERE id = %s AND estado = 1", [sede_id])
+            cursor.execute("""
+                SELECT id, nombre, NombreImpresora, ruta, token
+                FROM sede WHERE id = %s AND estado = 1
+            """, [sede_id])
             row = cursor.fetchone()
             if row:
-                context['sede_actual'] = {'id': row[0], 'nombre': row[1]}
+                context['sede_actual'] = {
+                    'id': row[0],
+                    'nombre': row[1],
+                    'nombre_impresora': row[2] or '',
+                    'nubefact_ruta': row[3] or '',
+                    'nubefact_token': row[4] or '',
+                }
     
     # Obtener todas las sedes activas para menús de selección
     with connection.cursor() as cursor:

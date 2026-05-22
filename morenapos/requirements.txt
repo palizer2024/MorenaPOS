@@ -2,9 +2,9 @@
 Django==5.0.6
 
 # Base de datos SQL Server (Azure SQL)
-# pyodbc requiere el driver ODBC para SQL Server instalado en el sistema
-pyodbc==5.1.0
-django-pyodbc-azure==2.1.0.0
+# mssql-django es el driver mantenido oficialmente para Django + SQL Server
+# Requiere: ODBC Driver 18 for SQL Server instalado en el sistema
+mssql-django==1.1.2
 
 # Frontend y UI
 django-htmx==1.20.0

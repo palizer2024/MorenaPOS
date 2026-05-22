@@ -110,6 +110,11 @@
                         <p class="text-xs text-gray-500">
                             <i class="fas fa-store"></i> {{ request.session.sede_nombre|default:'Sin sede' }}
                         </p>
+                        {% if sede_actual and sede_actual.nombre_impresora %}
+                        <p class="text-xs text-gray-400">
+                            <i class="fas fa-print"></i> {{ sede_actual.nombre_impresora }}
+                        </p>
+                        {% endif %}
                     </div>
                     <div class="relative">
                         <a href="{% url 'logout' %}"

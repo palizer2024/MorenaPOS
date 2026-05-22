@@ -28,9 +28,8 @@ staticfiles/
 *.swo
 *~
 .DS_Store
-
 # Azure deployment
-web.config  # Windows IIS config (not needed on Linux)
+
 
 # Environment files
 .env.local
