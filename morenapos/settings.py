@@ -155,9 +155,12 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = 'es-pe'
 TIME_ZONE = 'America/Lima'
 USE_I18N = True
-# USE_TZ=False para evitar el tipo datetimeoffset de SQL Server
-# que mssql-django 1.1.2 no soporta (ODBC SQL type -155)
-USE_TZ = False
+USE_TZ = True
+
+# Backend de sesiones: usar cache (evita la tabla django_session
+# que tiene columna datetimeoffset no soportada por mssql-django)
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
