@@ -305,11 +305,13 @@ def api_previsualizar_comprobante(request):
     Usa los datos de sedeclonada para ruta, token, series y correlativos.
     Guarda el comprobante en comprobanteclonada y su detalle en comprobantedetclonada.
     Auto-incrementa el correlativo en sedeclonada.
+    
+    NOTA: Usa SQL directo (no ORM) para sedeclonada/comprobanteclonada/comprobantedetclonada
+    porque el driver ODBC en Linux no soporta datetimeoffset (tipo SQL -155).
     """
     import json
     import requests
     from datetime import datetime, timedelta
-    from facturacion.models import SedeClonada, ComprobanteClonado, ComprobanteDetClonado
 
     try:
         data = json.loads(request.body)
@@ -330,28 +332,51 @@ def api_previsualizar_comprobante(request):
     if not sede_id:
         return JsonResponse({'error': 'Sin sede seleccionada'}, status=400)
 
-    # Obtener datos de sedeclonada (ruta, token, series, correlativos)
-    try:
-        sede_clonada = SedeClonada.objects.get(id_sede_original=sede_id)
-    except SedeClonada.DoesNotExist:
+    # Obtener datos de sedeclonada usando SQL directo (evita datetimeoffset del ORM)
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT
+                id_sede_original, nombre, valor_igv, identificador,
+                serie_factura, serie_boleta, correlativo_boleta, correlativo_factura,
+                serie_nota_credito_boleta, correlativo_nota_credito_boleta,
+                serie_nota_credito_factura, correlativo_nota_credito_factura,
+                ruta, token, serie_ticket, correlativo_ticket, nombre_impresora,
+                created, modified, user_created, user_modified, estado, fecha_clonacion
+            FROM sedeclonada
+            WHERE id_sede_original = %s
+        """, [sede_id])
+        sede_row = cursor.fetchone()
+    
+    if not sede_row:
         return JsonResponse({'error': 'Sede no encontrada en sedeclonada. Ejecute: python manage.py clonar_tablas --solo-sedes'}, status=400)
 
-    nubefact_ruta = (sede_clonada.ruta or '').strip()
-    nubefact_token = (sede_clonada.token or '').strip()
-    valor_igv = float(sede_clonada.valor_igv) if sede_clonada.valor_igv else 10.5
+    # Mapear columnas por índice
+    nubefact_ruta = (sede_row[12] or '').strip()   # ruta
+    nubefact_token = (sede_row[13] or '').strip()   # token
+    valor_igv = float(sede_row[2]) if sede_row[2] else 10.5  # valor_igv
+    serie_boleta = sede_row[5] or ''   # serie_boleta
+    serie_factura = sede_row[4] or ''  # serie_factura
+    correlativo_boleta = int(sede_row[6]) if sede_row[6] else 0   # correlativo_boleta
+    correlativo_factura = int(sede_row[7]) if sede_row[7] else 0  # correlativo_factura
 
     if not nubefact_ruta:
         return JsonResponse({'error': 'La sede no tiene configurada la ruta de Nubefact en sedeclonada'}, status=400)
     if not nubefact_token:
         return JsonResponse({'error': 'La sede no tiene configurado el token de Nubefact en sedeclonada'}, status=400)
 
-    # Obtener serie y auto-incrementar correlativo desde sedeclonada
+    # Obtener serie y auto-incrementar correlativo desde sedeclonada (SQL directo)
     if tipo == 'boleta':
-        serie = sede_clonada.serie_boleta
-        correlativo = sede_clonada.get_next_correlativo('BO')
+        serie = serie_boleta
+        nuevo_correlativo = correlativo_boleta + 1
+        with connection.cursor() as cursor:
+            cursor.execute("UPDATE sedeclonada SET correlativo_boleta = %s WHERE id_sede_original = %s", [nuevo_correlativo, sede_id])
+        correlativo = nuevo_correlativo
     else:
-        serie = sede_clonada.serie_factura
-        correlativo = sede_clonada.get_next_correlativo('FA')
+        serie = serie_factura
+        nuevo_correlativo = correlativo_factura + 1
+        with connection.cursor() as cursor:
+            cursor.execute("UPDATE sedeclonada SET correlativo_factura = %s WHERE id_sede_original = %s", [nuevo_correlativo, sede_id])
+        correlativo = nuevo_correlativo
     
     # Obtener detalle del ticket
     with connection.cursor() as cursor:
@@ -522,54 +547,64 @@ def api_previsualizar_comprobante(request):
                 'detalle': nubefact_resp['errors']
             }, status=400)
         
-        # === GUARDAR EN comprobanteclonada y comprobantedetclonada ===
+        # === GUARDAR EN comprobanteclonada y comprobantedetclonada (SQL directo) ===
         from django.db import transaction as db_transaction
         
         with db_transaction.atomic():
             # Generar un ID negativo único para comprobantes emitidos desde Nubefact
-            # (no clonados), para evitar violar la constraint UNIQUE
-            from django.db.models import Min
-            min_id = ComprobanteClonado.objects.aggregate(min_id=Min('id_comprobante_original'))['min_id'] or 0
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT MIN(id_comprobante_original) FROM comprobanteclonada")
+                min_id_row = cursor.fetchone()
+                min_id = min_id_row[0] if min_id_row and min_id_row[0] is not None else 0
             next_negative_id = min(min_id - 1, -1)
             
-            # Crear el comprobante clonado
-            comprobante_clonado = ComprobanteClonado.objects.create(
-                id_comprobante_original=next_negative_id,
-                id_cliente=0,
-                id_sede=sede_id,
-                turno=request.session.get('turno', ''),
-                referenciaticket=str(ticket_id),
-                serie=serie,
-                correlativo=correlativo,
-                tipocomprobante='BOLETA' if tipo == 'boleta' else 'FACTURA',
-                total=round(total_general, 2),
-                enviosunat=1 if nubefact_resp.get('aceptada_por_sunat', False) else 0,
-                identificador=0,
-                usercreated=request.session.get('usuario_login', ''),
-                created=fecha_emision,
-                estado=True,
-                enviado_sunat=True,
-                respuesta_sunat=json.dumps(nubefact_resp),
-                fecha_envio_sunat=datetime.now(),
-            )
+            # Insertar en comprobanteclonada (SQL directo)
+            now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            fecha_emision_str = fecha_emision.strftime('%Y-%m-%d %H:%M:%S')
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    INSERT INTO comprobanteclonada
+                        (id_comprobante_original, id_cliente, id_sede, turno, referenciaticket,
+                         serie, correlativo, tipocomprobante, total, enviosunat, identificador,
+                         usercreated, created, estado, enviado_sunat, respuesta_sunat, fecha_envio_sunat)
+                    OUTPUT INSERTED.id
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, [
+                    next_negative_id, 0, sede_id, request.session.get('turno', ''),
+                    str(ticket_id), serie, correlativo,
+                    'BOLETA' if tipo == 'boleta' else 'FACTURA',
+                    round(total_general, 2),
+                    1 if nubefact_resp.get('aceptada_por_sunat', False) else 0,
+                    0, request.session.get('usuario_login', ''),
+                    fecha_emision_str, 1, 1,
+                    json.dumps(nubefact_resp), now_str
+                ])
+                comprobante_clonado_id = cursor.fetchone()[0]
             
-            # Crear los detalles clonados
-            from django.db.models import Min as MinDet
-            min_det_id = ComprobanteDetClonado.objects.aggregate(min_id=MinDet('id_detalle_original'))['min_id'] or 0
+            # Generar ID negativo único para detalles
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT MIN(id_detalle_original) FROM comprobantedetclonada")
+                min_det_row = cursor.fetchone()
+                min_det_id = min_det_row[0] if min_det_row and min_det_row[0] is not None else 0
             next_det_negative_id = min(min_det_id - 1, -1)
             
+            # Insertar detalles en comprobantedetclonada (SQL directo)
             for i, row in enumerate(det_rows):
-                ComprobanteDetClonado.objects.create(
-                    id_detalle_original=next_det_negative_id - i,  # IDs negativos únicos
-                    id_comprobante_clonado=comprobante_clonado,
-                    id_producto=int(row[0]) if row[0] else 0,
-                    descripcion=row[1],
-                    tipoventa='',
-                    codproductosunat='',
-                    cantidad=float(row[2]) if row[2] else 1,
-                    preciounitario=float(row[3]) if row[3] else 0,
-                    total=float(row[4]) if row[4] else 0,
-                )
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        INSERT INTO comprobantedetclonada
+                            (id_detalle_original, id_comprobante_clonado, id_producto, descripcion,
+                             tipoventa, codproductosunat, cantidad, preciounitario, total)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, [
+                        next_det_negative_id - i,
+                        comprobante_clonado_id,
+                        int(row[0]) if row[0] else 0,
+                        row[1], '', '',
+                        float(row[2]) if row[2] else 1,
+                        float(row[3]) if row[3] else 0,
+                        float(row[4]) if row[4] else 0,
+                    ])
         
         # Devolver datos al frontend
         return JsonResponse({
@@ -586,7 +621,7 @@ def api_previsualizar_comprobante(request):
             'cadena_para_codigo_qr': nubefact_resp.get('cadena_para_codigo_qr', ''),
             'codigo_hash': nubefact_resp.get('codigo_hash', ''),
             'sunat_description': nubefact_resp.get('sunat_description', ''),
-            'comprobante_id': comprobante_clonado.id,
+            'comprobante_id': comprobante_clonado_id,
         })
         
     except requests.exceptions.Timeout:
@@ -632,22 +667,24 @@ def api_impresora_info(request):
     """
     API que devuelve el nombre de la impresora configurada en sedeclonada
     para la sede actual.
+    Usa SQL directo para evitar problemas con datetimeoffset del ORM en Linux.
     """
-    from facturacion.models import SedeClonada
-    
     sede_id = request.session.get('sede_id')
     if not sede_id:
         return JsonResponse({'error': 'Sin sede seleccionada'}, status=400)
     
-    try:
-        sede_clonada = SedeClonada.objects.get(id_sede_original=sede_id)
-        nombre_impresora = (sede_clonada.nombre_impresora or '').strip()
-        return JsonResponse({
-            'success': True,
-            'nombre_impresora': nombre_impresora,
-        })
-    except SedeClonada.DoesNotExist:
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT nombre_impresora FROM sedeclonada WHERE id_sede_original = %s", [sede_id])
+        row = cursor.fetchone()
+    
+    if not row:
         return JsonResponse({'error': 'Sede no encontrada en sedeclonada'}, status=400)
+    
+    nombre_impresora = (row[0] or '').strip()
+    return JsonResponse({
+        'success': True,
+        'nombre_impresora': nombre_impresora,
+    })
 
 
 @login_required
@@ -677,12 +714,15 @@ def api_imprimir_comprobante(request):
     if not sede_id:
         return JsonResponse({'error': 'Sin sede seleccionada'}, status=400)
     
-    from facturacion.models import SedeClonada
-    try:
-        sede_clonada = SedeClonada.objects.get(id_sede_original=sede_id)
-        nombre_impresora = (sede_clonada.nombre_impresora or '').strip()
-    except SedeClonada.DoesNotExist:
+    # SQL directo para evitar datetimeoffset del ORM en Linux
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT nombre_impresora FROM sedeclonada WHERE id_sede_original = %s", [sede_id])
+        imp_row = cursor.fetchone()
+    
+    if not imp_row:
         return JsonResponse({'error': 'Sede no encontrada en sedeclonada'}, status=400)
+    
+    nombre_impresora = (imp_row[0] or '').strip()
     
     if not nombre_impresora:
         return JsonResponse({'error': 'La sede no tiene impresora configurada en sedeclonada'}, status=400)
