@@ -19,6 +19,7 @@ whitenoise==6.6.0
 
 # Desarrollo
 python-decouple==3.8
+django-debug-toolbar==4.3.0
 
 # Facturación electrónica (Nubefact)
 requests==2.31.0
