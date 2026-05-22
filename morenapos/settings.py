@@ -101,6 +101,7 @@ if DB_ENGINE == 'sqlite':
     }
 elif DB_ENGINE == 'mssql':
     # SQL Server (Azure SQL Database)
+    # Usa mssql-django (compatible con Python 3.12)
     DATABASES = {
         'default': {
             'ENGINE': 'mssql',
@@ -111,7 +112,7 @@ elif DB_ENGINE == 'mssql':
             'PORT': os.environ.get('DB_PORT', '1433'),
             'OPTIONS': {
                 'driver': os.environ.get('DB_DRIVER', 'ODBC Driver 18 for SQL Server'),
-                'extra_params': 'TrustServerCertificate=yes' if DEBUG else '',
+                'extra_params': 'TrustServerCertificate=yes;Encrypt=yes',
             },
         }
     }

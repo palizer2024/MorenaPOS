@@ -2,8 +2,8 @@
 Django==5.0.6
 
 # Base de datos SQL Server (Azure SQL)
-# django-pyodbc-azure para SQL Server
-django-pyodbc-azure==2.1.0.0
+# mssql-django es compatible con Python 3.12
+mssql-django==1.1.2
 
 # Frontend y UI
 django-htmx==1.20.0
