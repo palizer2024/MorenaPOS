@@ -61,11 +61,24 @@ fi
 python3 -c "import django; print(f'Django {django.get_version()}')" 2>&1
 
 # ============================================================
-# PASO 4: Iniciar Gunicorn directamente (sin collectstatic)
+# PASO 4: Ejecutar collectstatic y migrate
+# ============================================================
+echo ""
+echo "=== Ejecutando collectstatic ==="
+cd "$APP_DIR/morenapos"
+python3 manage.py collectstatic --noinput 2>&1 || echo "⚠ collectstatic falló (no crítico)"
+echo "✓ collectstatic completado"
+
+echo ""
+echo "=== Ejecutando migrate ==="
+python3 manage.py migrate --noinput 2>&1 || echo "⚠ migrate falló (no crítico)"
+echo "✓ migrate completado"
+
+# ============================================================
+# PASO 5: Iniciar Gunicorn
 # ============================================================
 echo ""
 echo "=== Iniciando Gunicorn ==="
-cd "$APP_DIR/morenapos"
 echo "Directorio: $(pwd)"
 echo "Contenido:"
 ls -la
