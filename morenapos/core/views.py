@@ -559,6 +559,7 @@ def api_previsualizar_comprobante(request):
             next_negative_id = min(min_id - 1, -1)
             
             # Insertar en comprobanteclonada (SQL directo)
+            # NOTA: fecha_clonacion es NOT NULL sin default — debe incluirse explícitamente
             now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             fecha_emision_str = fecha_emision.strftime('%Y-%m-%d %H:%M:%S')
             with connection.cursor() as cursor:
@@ -566,9 +567,10 @@ def api_previsualizar_comprobante(request):
                     INSERT INTO comprobanteclonada
                         (id_comprobante_original, id_cliente, id_sede, turno, referenciaticket,
                          serie, correlativo, tipocomprobante, total, enviosunat, identificador,
-                         usercreated, created, estado, enviado_sunat, respuesta_sunat, fecha_envio_sunat)
+                         usercreated, created, estado, enviado_sunat, respuesta_sunat,
+                         fecha_envio_sunat, fecha_clonacion)
                     OUTPUT INSERTED.id
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, [
                     next_negative_id, 0, sede_id, request.session.get('turno', ''),
                     str(ticket_id), serie, correlativo,
@@ -577,7 +579,8 @@ def api_previsualizar_comprobante(request):
                     1 if nubefact_resp.get('aceptada_por_sunat', False) else 0,
                     0, request.session.get('usuario_login', ''),
                     fecha_emision_str, 1, 1,
-                    json.dumps(nubefact_resp), now_str
+                    json.dumps(nubefact_resp), now_str,
+                    now_str,  # fecha_clonacion
                 ])
                 comprobante_clonado_id = cursor.fetchone()[0]
             
@@ -589,13 +592,15 @@ def api_previsualizar_comprobante(request):
             next_det_negative_id = min(min_det_id - 1, -1)
             
             # Insertar detalles en comprobantedetclonada (SQL directo)
+            # NOTA: fecha_clonacion es NOT NULL sin default — debe incluirse explícitamente
             for i, row in enumerate(det_rows):
                 with connection.cursor() as cursor:
                     cursor.execute("""
                         INSERT INTO comprobantedetclonada
                             (id_detalle_original, id_comprobante_clonado, id_producto, descripcion,
-                             tipoventa, codproductosunat, cantidad, preciounitario, total)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                             tipoventa, codproductosunat, cantidad, preciounitario, total,
+                             fecha_clonacion)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """, [
                         next_det_negative_id - i,
                         comprobante_clonado_id,
@@ -604,6 +609,7 @@ def api_previsualizar_comprobante(request):
                         float(row[2]) if row[2] else 1,
                         float(row[3]) if row[3] else 0,
                         float(row[4]) if row[4] else 0,
+                        now_str,  # fecha_clonacion
                     ])
         
         # Devolver datos al frontend
