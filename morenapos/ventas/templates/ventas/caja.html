@@ -1745,39 +1745,46 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // === IMPRIMIR COMPROBANTE ===
+    // La impresión se hace desde el navegador del cliente (no desde el servidor).
+    // Se abre el PDF en una ventana nueva y se dispara window.print() automáticamente.
+    // Esto funciona tanto en Azure (Linux) como en local (Windows).
     window.__imprimirComprobante = function() {
         var pdfUrl = __ultimoPdfUrl;
-        if (!pdfUrl) {
-            alert('No hay PDF disponible para imprimir');
+        var pdfIframe = document.getElementById('pdfIframe');
+
+        // Opción 1: si el iframe ya tiene el PDF cargado, imprimir desde el iframe
+        if (pdfIframe && pdfIframe.style.display !== 'none' && pdfIframe.src) {
+            try {
+                pdfIframe.contentWindow.focus();
+                pdfIframe.contentWindow.print();
+                return;
+            } catch(e) {
+                // Si hay restricción de cross-origin, caer al método 2
+            }
+        }
+
+        // Opción 2: abrir el PDF en ventana nueva y disparar print()
+        if (pdfUrl) {
+            // Usar el proxy del backend para evitar problemas CORS
+            var proxyUrl = '/api/proxy-pdf/?url=' + encodeURIComponent(pdfUrl);
+            var printWin = window.open(proxyUrl, '_blank', 'width=800,height=600');
+            if (printWin) {
+                printWin.onload = function() {
+                    try {
+                        printWin.focus();
+                        printWin.print();
+                    } catch(e) {
+                        // El usuario puede imprimir manualmente con Ctrl+P
+                    }
+                };
+            } else {
+                // Popup bloqueado: abrir sin auto-print
+                window.open(proxyUrl, '_blank');
+            }
             return;
         }
-        var btnPrint = document.getElementById('btnPrint');
-        if (btnPrint) {
-            btnPrint.disabled = true;
-            btnPrint.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Imprimiendo...';
-        }
-        fetch('/api/imprimir-comprobante/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-            body: JSON.stringify({ pdf_url: pdfUrl, comprobante_id: __ultimoComprobanteId })
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.success) {
-                alert(data.mensaje || 'Comprobante enviado a la impresora');
-            } else {
-                alert('Error al imprimir: ' + (data.error || 'Error desconocido'));
-            }
-        })
-        .catch(function(err) {
-            alert('Error al imprimir: ' + err.message);
-        })
-        .finally(function() {
-            if (btnPrint) {
-                btnPrint.disabled = false;
-                btnPrint.innerHTML = '<i class="fas fa-print"></i> Imprimir';
-            }
-        });
+
+        alert('No hay PDF disponible para imprimir');
     };
     
     // === ACTUALIZAR: habilitar/deshabilitar botón preview al seleccionar ticket ===
