@@ -509,7 +509,7 @@ def api_previsualizar_comprobante(request):
         "medio_de_pago": "",
         "placa_vehiculo": "",
         "orden_compra_servicio": "",
-        "formato_de_pdf": "",
+        "formato_de_pdf": "TICKET",
         "items": items
     }
     
