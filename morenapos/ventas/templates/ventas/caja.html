@@ -966,6 +966,20 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // === AUTO-REFRESH AL VOLVER A LA PESTAÑA (Page Visibility API) ===
+    // Cuando la cajera cambia de aplicación y vuelve a la página de caja,
+    // se recarga automáticamente para mostrar los tickets más recientes.
+    var visibilityTimeout = null;
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') {
+            // Pequeño retardo para evitar recargas múltiples
+            if (visibilityTimeout) clearTimeout(visibilityTimeout);
+            visibilityTimeout = setTimeout(function() {
+                location.reload();
+            }, 300);
+        }
+    });
+
     const fechaActualStr = '{{ fecha_actual_str }}';
     // today = fecha real de hoy (del servidor)
     const today = new Date('{{ today_str }}' + 'T12:00:00');
