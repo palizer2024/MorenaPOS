@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.db import connection
-from django.utils.timezone import now
+from django.utils.timezone import now, localtime
 from datetime import datetime
 from core.views import login_required
 
@@ -15,12 +15,12 @@ def caja(request):
     sede_id = request.session.get('sede_id')
     sede_nombre = request.session.get('sede_nombre', '')
     
-    # Fecha seleccionada (hoy por defecto)
+    # Fecha seleccionada (hoy por defecto, en hora local)
     fecha_str = request.GET.get('fecha', '')
     try:
-        fecha_filtro = datetime.strptime(fecha_str, '%Y-%m-%d').date() if fecha_str else now().date()
+        fecha_filtro = datetime.strptime(fecha_str, '%Y-%m-%d').date() if fecha_str else localtime(now()).date()
     except ValueError:
-        fecha_filtro = now().date()
+        fecha_filtro = localtime(now()).date()
     
     # Obtener tickets de la sede y fecha seleccionada
     tickets = []
@@ -57,6 +57,6 @@ def caja(request):
         'tickets': tickets,
         'fecha_actual': fecha_filtro.isoformat(),
         'fecha_actual_str': fecha_filtro.strftime('%Y-%m-%d'),
-        'today_str': now().date().strftime('%Y-%m-%d'),
+        'today_str': localtime(now()).date().strftime('%Y-%m-%d'),
     }
     return render(request, 'ventas/caja.html', context)

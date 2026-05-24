@@ -312,6 +312,7 @@ def api_previsualizar_comprobante(request):
     import json
     import requests
     from datetime import datetime, timedelta
+    from django.utils.timezone import now, localtime
 
     try:
         data = json.loads(request.body)
@@ -406,14 +407,14 @@ def api_previsualizar_comprobante(request):
         """, [ticket_id])
         ticket_row = cursor.fetchone()
     
-    fecha_emision = ticket_row[0] if ticket_row else datetime.now()
+    fecha_emision = ticket_row[0] if ticket_row else localtime(now())
     if isinstance(fecha_emision, str):
         from datetime import datetime as dt
         fecha_emision = dt.strptime(fecha_emision, '%Y-%m-%d %H:%M:%S')
     
     # VALIDAR QUE LA FECHA DEL TICKET SEA DE HOY
     # Nubefact requiere que la fecha de emisión sea la fecha de hoy
-    hoy = datetime.now().date()
+    hoy = localtime(now()).date()
     if fecha_emision.date() != hoy:
         return JsonResponse({
             'error': 'Para emitir un comprobante el consumo debe ser del mismo día',
@@ -569,7 +570,7 @@ def api_previsualizar_comprobante(request):
             
             # Insertar en comprobanteclonada (SQL directo)
             # NOTA: fecha_clonacion es NOT NULL sin default — debe incluirse explícitamente
-            now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            now_str = localtime(now()).strftime('%Y-%m-%d %H:%M:%S')
             fecha_emision_str = fecha_emision.strftime('%Y-%m-%d %H:%M:%S')
             with connection.cursor() as cursor:
                 cursor.execute("""
