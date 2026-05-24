@@ -52,10 +52,30 @@
         font-size: 16px;
         font-weight: 700;
         cursor: pointer;
-        transition: opacity 0.2s;
+        transition: opacity 0.2s, background-color 0.2s;
     }
-    .btn-login:hover {
+    .btn-login:hover:not(:disabled) {
         opacity: 0.9;
+    }
+    .btn-login:disabled {
+        background-color: #e0a800;
+        color: #555;
+        cursor: not-allowed;
+        opacity: 0.85;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    .spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid #55500080;
+        border-top-color: #333;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        vertical-align: middle;
+        margin-right: 6px;
     }
     .logo {
         text-align: center;
@@ -85,7 +105,7 @@
             <p>Seleccione una Sede</p>
         </div>
 
-        <form method="POST" action="{% url 'login' %}">
+        <form method="POST" action="{% url 'login' %}" onsubmit="window.__onLoginSubmit(this)">
             {% csrf_token %}
 
             <div class="field-group">
@@ -100,10 +120,21 @@
                 </select>
             </div>
 
-            <button type="submit" class="btn-login">
+            <button type="submit" class="btn-login" id="btnLogin">
                 Ingresar
             </button>
         </form>
+
+        <script>
+        window.__onLoginSubmit = function(form) {
+            var btn = document.getElementById('btnLogin');
+            // Validar que se seleccionó una sede antes de bloquear
+            var select = form.querySelector('select[name="sede"]');
+            if (!select || !select.value) return; // dejar que el browser valide
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Iniciando sesión...';
+        };
+        </script>
     </div>
 </div>
 {% endblock %}

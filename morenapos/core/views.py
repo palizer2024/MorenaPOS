@@ -411,6 +411,15 @@ def api_previsualizar_comprobante(request):
         from datetime import datetime as dt
         fecha_emision = dt.strptime(fecha_emision, '%Y-%m-%d %H:%M:%S')
     
+    # VALIDAR QUE LA FECHA DEL TICKET SEA DE HOY
+    # Nubefact requiere que la fecha de emisión sea la fecha de hoy
+    hoy = datetime.now().date()
+    if fecha_emision.date() != hoy:
+        return JsonResponse({
+            'error': 'Para emitir un comprobante el consumo debe ser del mismo día',
+            'detalle': 'No se pueden emitir boletas o facturas de tickets de días anteriores'
+        }, status=400)
+    
     # Determinar tipo de comprobante Nubefact
     # 1 = Factura, 2 = Boleta
     tipo_comprobante = 2 if tipo == 'boleta' else 1

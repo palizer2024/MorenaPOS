@@ -944,7 +944,7 @@
         <h2 style="margin:0 0 8px 0;color:#333;font-size:20px;">¡Comprobante Emitido!</h2>
         <p id="successModalInfo" style="margin:0 0 20px 0;color:#666;font-size:14px;"></p>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-            <button onclick="window.__imprimirComprobante()" style="padding:10px 20px;background:#28a745;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;">
+            <button onclick="window.__imprimirYRefrescar()" style="padding:10px 20px;background:#28a745;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;">
                 <i class="fas fa-print"></i> Imprimir
             </button>
             <button onclick="window.__cerrarModalExito()" style="padding:10px 20px;background:#6c757d;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;">
@@ -1742,12 +1742,24 @@ document.addEventListener('DOMContentLoaded', function() {
     
     window.__cerrarModalExito = function() {
         document.getElementById('successModal').style.display = 'none';
+        // Refrescar la página para empezar un nuevo documento
+        location.reload();
+    };
+    
+    // === IMPRIMIR Y REFRESCAR (desde el modal de éxito) ===
+    // Cierra el modal, imprime el comprobante y refresca la página
+    window.__imprimirYRefrescar = function() {
+        // Cerrar modal primero
+        document.getElementById('successModal').style.display = 'none';
+        // Imprimir y refrescar
+        window.__imprimirComprobante();
     };
     
     // === IMPRIMIR COMPROBANTE ===
     // La impresión se hace desde el navegador del cliente (no desde el servidor).
     // Se abre el PDF en una ventana nueva y se dispara window.print() automáticamente.
     // Esto funciona tanto en Azure (Linux) como en local (Windows).
+    // Después de imprimir, refresca la página para emitir un nuevo documento.
     window.__imprimirComprobante = function() {
         var pdfUrl = __ultimoPdfUrl;
         var pdfIframe = document.getElementById('pdfIframe');
@@ -1757,6 +1769,8 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 pdfIframe.contentWindow.focus();
                 pdfIframe.contentWindow.print();
+                // Refrescar después de imprimir
+                setTimeout(function() { location.reload(); }, 500);
                 return;
             } catch(e) {
                 // Si hay restricción de cross-origin, caer al método 2
@@ -1777,9 +1791,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         // El usuario puede imprimir manualmente con Ctrl+P
                     }
                 };
+                // Refrescar la página actual después de un breve retardo
+                setTimeout(function() { location.reload(); }, 1000);
             } else {
                 // Popup bloqueado: abrir sin auto-print
                 window.open(proxyUrl, '_blank');
+                // Aún así refrescar para continuar con nuevo documento
+                setTimeout(function() { location.reload(); }, 500);
             }
             return;
         }
