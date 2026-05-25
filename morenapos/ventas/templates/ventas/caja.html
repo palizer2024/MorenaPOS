@@ -1845,12 +1845,30 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // === ACTUALIZAR: habilitar/deshabilitar botón preview al seleccionar ticket ===
-    // (modificamos __selectTicket para que también habilite el botón)
     var __originalSelectTicket = window.__selectTicket;
     window.__selectTicket = function(row, ticketId) {
         __originalSelectTicket(row, ticketId);
-        __currentTicketId = ticketId;
-        document.getElementById('btnPreview').disabled = false;
+        // Verificar si el ticket fue seleccionado o deseleccionado
+        if (row.classList.contains('multi-selected')) {
+            // Fue seleccionado: actualizar currentTicketId al último seleccionado
+            const selectedRows = document.querySelectorAll('.tickets-table tbody tr.multi-selected');
+            if (selectedRows.length > 0) {
+                const lastRow = selectedRows[selectedRows.length - 1];
+                __currentTicketId = lastRow.getAttribute('data-ticket-id');
+            }
+            document.getElementById('btnPreview').disabled = false;
+        } else {
+            // Fue deseleccionado: verificar si quedan tickets seleccionados
+            const selectedRows = document.querySelectorAll('.tickets-table tbody tr.multi-selected');
+            if (selectedRows.length === 0) {
+                __currentTicketId = null;
+                document.getElementById('btnPreview').disabled = true;
+            } else {
+                const lastRow = selectedRows[selectedRows.length - 1];
+                __currentTicketId = lastRow.getAttribute('data-ticket-id');
+                document.getElementById('btnPreview').disabled = false;
+            }
+        }
     };
     
     // Init
